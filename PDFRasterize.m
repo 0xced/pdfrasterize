@@ -153,8 +153,8 @@
 	
 	BOOL supportsAlpha = [format isEqualToString:@"png"] || [format isEqualToString:@"tiff"];
 	if (transparent && !supportsAlpha) {
-		// TODO: Report error or silently ignore?
-		transparent = NO;
+		ddfprintf(stderr, @"%@: The %@ format does not support transparency\n", DDCliApp, format);
+		return EXIT_FAILURE;
 	}
 	
 	if ([arguments count] < 1) {
