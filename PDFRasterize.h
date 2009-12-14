@@ -10,8 +10,8 @@
 
 @interface PDFRasterize : NSObject <DDCliApplicationDelegate>
 {
-    NSString * _output;
-    BOOL _help;
+    NSString *outputDir;
+    BOOL help;
 }
 
 @end
