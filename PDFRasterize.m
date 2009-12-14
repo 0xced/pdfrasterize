@@ -171,6 +171,12 @@
 	
 	NSURL *pdfURL = [NSURL fileURLWithPath:pdfPath];
 	CGPDFDocumentRef pdfDocument = CGPDFDocumentCreateWithURL((CFURLRef)pdfURL);
+	
+	if (!pdfDocument) {
+		ddfprintf(stderr, @"%@: Invalid PDF file\n", DDCliApp);
+		return EXIT_FAILURE;
+	}
+	
 	size_t pageCount = CGPDFDocumentGetNumberOfPages(pdfDocument);
 	
 	if (!pages) {
