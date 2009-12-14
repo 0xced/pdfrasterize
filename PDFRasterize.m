@@ -79,8 +79,24 @@
 	ddfprintf(stream, @"Usage: %@ [options] file\n", DDCliApp);
 }
 
+- (void) printHelp
+{
+	[self printUsage:stdout];
+	ddprintf(@"Options:\n"
+	         @"    -o, --output-dir DIR          Rasterized files go into DIR -- Default is current working directory\n"
+	         @"    -f, --format FORMAT           Output format (%@) -- Default is png\n"
+	         @"    -t, --transparent             Draw a transparent background instead of white (png and tiff formats only)\n"
+	         @"    -h, --help                    Display this help and exit\n",
+	         [[[bitmapFormatUTIs allKeys] sortedArrayUsingSelector:@selector(compare:)] componentsJoinedByString:@"/"]);
+}
+
 - (int) application:(DDCliApplication *)app runWithArguments:(NSArray *)arguments;
 {
+	if (help) {
+		[self printHelp];
+		return EXIT_SUCCESS;
+	}
+	
 	BOOL supportsAlpha = [format isEqualToString:@"png"] || [format isEqualToString:@"tiff"];
 	if (transparent && !supportsAlpha) {
 		// TODO: Report error or silently ignore?
