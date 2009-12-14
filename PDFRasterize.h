@@ -15,6 +15,7 @@
 	NSString *outputDir;
 	NSString *format;
 	BOOL transparent;
+	float scale;
 	
 	NSMutableDictionary *bitmapFormatUTIs;
 }
