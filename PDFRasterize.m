@@ -94,39 +94,47 @@
 
 - (int) rasterize:(NSString *)pdfPath
 {
+	bool success = true;
 	NSURL *pdfURL = [NSURL fileURLWithPath:pdfPath];
 	CGPDFDocumentRef pdfDocument = CGPDFDocumentCreateWithURL((CFURLRef)pdfURL);
 	
-	CGPDFPageRef page = CGPDFDocumentGetPage(pdfDocument, 1);
-	CGRect boxRect = CGPDFPageGetBoxRect(page, kCGPDFCropBox);
+	size_t pageCount = CGPDFDocumentGetNumberOfPages(pdfDocument);
 	
-	size_t width = roundf(boxRect.size.width);
-	size_t height = roundf(boxRect.size.height);
-	size_t bytesPerLine = width * 4;
-	void *bitmapData = calloc(height * bytesPerLine, 1);
-	CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
+	for (size_t pageNumber = 1; pageNumber <= pageCount; pageNumber++)
+	{
+		CGPDFPageRef page = CGPDFDocumentGetPage(pdfDocument, pageNumber);
+		CGRect boxRect = CGPDFPageGetBoxRect(page, kCGPDFCropBox);
+		
+		size_t width = roundf(boxRect.size.width);
+		size_t height = roundf(boxRect.size.height);
+		size_t bytesPerLine = width * 4;
+		void *bitmapData = calloc(height * bytesPerLine, 1);
+		CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
+		
+		CGContextRef context = CGBitmapContextCreate(bitmapData, width, height, 8, bytesPerLine, colorSpace, kCGImageAlphaPremultipliedFirst);
+		
+		CGContextSetRGBFillColor(context, 1, 1, 1, 1); // white
+		CGContextFillRect(context, CGRectMake(0, 0, width, height));
+		
+		CGContextDrawPDFPage(context, page);
+		
+		CGImageRef pdfImage = CGBitmapContextCreateImage(context);
+		
+		NSString *baseName = [[pdfPath lastPathComponent] stringByDeletingPathExtension];
+		NSString *outputName = [NSString stringWithFormat:@"%@%d", baseName, pageNumber];
+		NSString *outputPath = [[outputDir stringByAppendingPathComponent:outputName] stringByAppendingPathExtension:format];
+		NSURL *outputURL = [NSURL fileURLWithPath:outputPath];
+		
+		CGImageDestinationRef destination = CGImageDestinationCreateWithURL((CFURLRef)outputURL, (CFStringRef)[bitmapFormatUTIs objectForKey:format], 1, NULL);
+		CGImageDestinationAddImage(destination, pdfImage, NULL);
+		success = success && CGImageDestinationFinalize(destination);
+		
+		CFRelease(destination);
+		CGImageRelease(pdfImage);
+		CGContextRelease(context);
+		CGColorSpaceRelease(colorSpace);
+	}
 	
-	CGContextRef context = CGBitmapContextCreate(bitmapData, width, height, 8, bytesPerLine, colorSpace, kCGImageAlphaPremultipliedFirst);
-	
-	CGContextSetRGBFillColor(context, 1, 1, 1, 1); // white
-	CGContextFillRect(context, CGRectMake(0, 0, width, height));
-
-	CGContextDrawPDFPage(context, page);
-	
-	CGImageRef pdfImage = CGBitmapContextCreateImage(context);
-	
-	NSString *baseName = [[pdfPath lastPathComponent] stringByDeletingPathExtension];
-	NSString *outputPath = [[outputDir stringByAppendingPathComponent:baseName] stringByAppendingPathExtension:format];
-	NSURL *outputURL = [NSURL fileURLWithPath:outputPath];
-	
-	CGImageDestinationRef destination = CGImageDestinationCreateWithURL((CFURLRef)outputURL, (CFStringRef)[bitmapFormatUTIs objectForKey:format], 1, NULL);
-	CGImageDestinationAddImage(destination, pdfImage, NULL);
-	bool success = CGImageDestinationFinalize(destination);
-	
-	CFRelease(destination);
-	CGImageRelease(pdfImage);
-	CGContextRelease(context);
-	CGColorSpaceRelease(colorSpace);
 	CGPDFDocumentRelease(pdfDocument);
 	
 	return success ? EXIT_SUCCESS : EXIT_FAILURE;
