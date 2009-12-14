@@ -121,7 +121,8 @@
 		CGImageRef pdfImage = CGBitmapContextCreateImage(context);
 		
 		NSString *baseName = [[pdfPath lastPathComponent] stringByDeletingPathExtension];
-		NSString *outputName = [NSString stringWithFormat:@"%@%d", baseName, pageNumber];
+		NSString *outputFormat = [NSString stringWithFormat:@"%%@-%%0%.0fd", floorf(log10f(pageCount)) + 1];
+		NSString *outputName = [NSString stringWithFormat:outputFormat, baseName, pageNumber];
 		NSString *outputPath = [[outputDir stringByAppendingPathComponent:outputName] stringByAppendingPathExtension:format];
 		NSURL *outputURL = [NSURL fileURLWithPath:outputPath];
 		
