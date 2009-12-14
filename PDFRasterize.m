@@ -17,6 +17,7 @@
 	self = [super init];
 	if (self != nil) {
 		help = NO;
+		format = @"png";
 		outputDir = @".";
 		
 		bitmapFormatUTIs = [[NSMutableDictionary alloc] initWithCapacity:5];
