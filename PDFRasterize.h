@@ -16,10 +16,11 @@
 	NSString *format;
 	BOOL transparent;
 	float scale;
+	NSMutableSet *pages;
 	
 	NSMutableDictionary *bitmapFormatUTIs;
 }
 
-- (int) rasterize:(NSString *)pdfPath;
+- (BOOL) rasterize:(CGPDFDocumentRef)pdfDocument baseName:(NSString *)baseName;
 
 @end

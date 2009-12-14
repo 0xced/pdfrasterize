@@ -19,6 +19,7 @@
 		format = @"png";
 		transparent = NO;
 		scale = 1.0;
+		pages = nil;
 		
 		bitmapFormatUTIs = [[NSMutableDictionary alloc] initWithCapacity:6];
 		[bitmapFormatUTIs setObject:(id)kUTTypeJPEG     forKey:@"jpg"];
@@ -43,6 +44,7 @@
 	    {@"format",      'f',    DDGetoptRequiredArgument},
 	    {@"transparent", 't',    DDGetoptNoArgument},
 	    {@"scale",       's',    DDGetoptRequiredArgument},
+	    {@"pages",       'p',    DDGetoptRequiredArgument},
 	    {nil,             0,     0},
 	};
 	[optionsParser addOptionsFromTable:optionTable];
@@ -64,6 +66,45 @@
 	BOOL validFloat = [scanner scanFloat:&scale];
 	if (!(validFloat && [scanner isAtEnd])) {
 		@throw [DDCliParseException parseExceptionWithReason:[NSString stringWithFormat:@"Invalid scale factor: %@", theScaleFactor] exitCode:EX_USAGE];
+	}
+}
+
+- (void) setPages:(NSString *)thePages
+{	
+	if (!pages) {
+		pages = [[NSMutableSet alloc] init];
+	}
+	[pages removeAllObjects];
+	
+	NSArray *ranges = [thePages componentsSeparatedByString:@","];
+	for (unsigned i = 0; i < [ranges count]; i++) {
+		NSString *range = [ranges objectAtIndex:i];
+		DDCliParseException *invalidPageRangesException = [DDCliParseException parseExceptionWithReason:[NSString stringWithFormat:@"Invalid page range: %@", [range length] > 0 ? range : @"<empty>"] exitCode:EX_USAGE];
+		NSScanner *scanner = [NSScanner scannerWithString:range];
+		int first, last;
+		
+		BOOL validFirst = [scanner scanInt:&first];
+		if (!(validFirst && first >= 1)) {
+			@throw invalidPageRangesException;
+		}
+		last = first;
+		if (![scanner isAtEnd]) {
+			BOOL validSeparator = [scanner scanString:@"-" intoString:NULL];
+			if (!validSeparator || [scanner isAtEnd]) {
+				@throw invalidPageRangesException;
+			}
+			BOOL validLast = [scanner scanInt:&last];
+			if (!(validLast && last >= 1 && [scanner isAtEnd])) {
+				@throw invalidPageRangesException;
+			}
+			if (!(last > first)) {
+				@throw invalidPageRangesException;
+			}
+		}
+		
+		for (int p = first; p <= last; p++) {
+			[pages addObject:[NSNumber numberWithInt:p]];
+		}
 	}
 }
 
@@ -98,6 +139,7 @@
 	         @"    -f, --format FORMAT           Output format (%@) -- Default is png\n"
 	         @"    -t, --transparent             Draw a transparent background instead of white (png and tiff formats only)\n"
 	         @"    -s, --scale FACTOR            Scale factor, must be positive -- Default is 1.0\n"
+	         @"    -p, --pages RANGE             Comma separated ranges of pages (e.g. 1,3-5,7) -- Default is all pages\n"
 	         @"    -h, --help                    Display this help and exit\n",
 	         [[[bitmapFormatUTIs allKeys] sortedArrayUsingSelector:@selector(compare:)] componentsJoinedByString:@"/"]);
 }
@@ -127,21 +169,41 @@
 		return ENOENT;
 	}
 	
-	return [self rasterize:pdfPath];
+	NSURL *pdfURL = [NSURL fileURLWithPath:pdfPath];
+	CGPDFDocumentRef pdfDocument = CGPDFDocumentCreateWithURL((CFURLRef)pdfURL);
+	size_t pageCount = CGPDFDocumentGetNumberOfPages(pdfDocument);
+	
+	if (!pages) {
+		pages = [[NSMutableSet alloc] init];
+		for (size_t i = 1; i <= pageCount; i++) {
+			[pages addObject:[NSNumber numberWithInt:i]];
+		}
+	}
+	
+	NSNumber *lastPageNumber = [[[pages allObjects] sortedArrayUsingSelector:@selector(compare:)] lastObject];
+	if ([lastPageNumber intValue] > pageCount) {
+		ddfprintf(stderr, @"%@: Document has no page %@ (last page is %d)\n", DDCliApp, lastPageNumber, pageCount);
+		return EX_USAGE;
+	}
+	
+	bool success = [self rasterize:pdfDocument baseName:[[pdfPath lastPathComponent] stringByDeletingPathExtension]];
+	
+	CGPDFDocumentRelease(pdfDocument);
+	
+	return success ? EXIT_SUCCESS : EXIT_FAILURE;
 }
 
 // MARK: Rasterization
 
-- (int) rasterize:(NSString *)pdfPath
+- (BOOL) rasterize:(CGPDFDocumentRef)pdfDocument baseName:(NSString *)baseName
 {
 	bool success = true;
-	NSURL *pdfURL = [NSURL fileURLWithPath:pdfPath];
-	CGPDFDocumentRef pdfDocument = CGPDFDocumentCreateWithURL((CFURLRef)pdfURL);
 	
 	size_t pageCount = CGPDFDocumentGetNumberOfPages(pdfDocument);
-	
-	for (size_t pageNumber = 1; pageNumber <= pageCount; pageNumber++)
+	NSArray *sortedPages = [[pages allObjects] sortedArrayUsingSelector:@selector(compare:)];
+	for (unsigned i = 0; i < [pages count]; i++)
 	{
+		size_t pageNumber = [[sortedPages objectAtIndex:i] intValue];
 		CGPDFPageRef page = CGPDFDocumentGetPage(pdfDocument, pageNumber);
 		CGRect boxRect = CGPDFPageGetBoxRect(page, kCGPDFCropBox);
 		
@@ -166,7 +228,6 @@
 		
 		CGImageRef pdfImage = CGBitmapContextCreateImage(context);
 		
-		NSString *baseName = [[pdfPath lastPathComponent] stringByDeletingPathExtension];
 		NSString *outputFormat = [NSString stringWithFormat:@"%%@-%%0%.0fd", floorf(log10f(pageCount)) + 1];
 		NSString *outputName = [NSString stringWithFormat:outputFormat, baseName, pageNumber];
 		NSString *outputPath = [[outputDir stringByAppendingPathComponent:outputName] stringByAppendingPathExtension:format];
@@ -182,9 +243,7 @@
 		CGColorSpaceRelease(colorSpace);
 	}
 	
-	CGPDFDocumentRelease(pdfDocument);
-	
-	return success ? EXIT_SUCCESS : EXIT_FAILURE;
+	return success;
 }
 
 @end
