@@ -14,4 +14,6 @@
     BOOL help;
 }
 
+- (int) rasterize:(NSString *)pdfPath;
+
 @end
