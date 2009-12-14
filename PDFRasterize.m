@@ -186,9 +186,8 @@
 		return EX_USAGE;
 	}
 	
-	bool success = [self rasterize:pdfDocument baseName:[[pdfPath lastPathComponent] stringByDeletingPathExtension]];
-	
-	CGPDFDocumentRelease(pdfDocument);
+	NSString *baseName = [[pdfPath lastPathComponent] stringByDeletingPathExtension];
+	bool success = [self rasterize:pdfDocument baseName:baseName];
 	
 	return success ? EXIT_SUCCESS : EXIT_FAILURE;
 }
