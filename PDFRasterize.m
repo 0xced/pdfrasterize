@@ -72,12 +72,6 @@
 	}
 }
 
-- (BOOL) transparentBackground
-{
-	BOOL supportsAlpha = [format isEqualToString:@"png"] || [format isEqualToString:@"tiff"];
-	return transparent && supportsAlpha;
-}
-
 // MARK: CLI handling
 
 - (void) printUsage:(FILE *)stream;
@@ -87,6 +81,12 @@
 
 - (int) application:(DDCliApplication *)app runWithArguments:(NSArray *)arguments;
 {
+	BOOL supportsAlpha = [format isEqualToString:@"png"] || [format isEqualToString:@"tiff"];
+	if (transparent && !supportsAlpha) {
+		// TODO: Report error or silently ignore?
+		transparent = NO;
+	}
+	
 	if ([arguments count] < 1) {
 		ddfprintf(stderr, @"%@: At least one pdf file is required\n", DDCliApp);
 		[self printUsage:stderr];
@@ -125,7 +125,7 @@
 		
 		CGContextRef context = CGBitmapContextCreate(bitmapData, width, height, 8, bytesPerLine, colorSpace, kCGImageAlphaPremultipliedFirst);
 		
-		if ([self transparentBackground]) {
+		if (transparent) {
 			CGContextClearRect(context, CGRectMake(0, 0, width, height));
 		} else {
 			CGContextSetRGBFillColor(context, 1, 1, 1, 1); // white
