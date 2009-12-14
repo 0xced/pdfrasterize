@@ -12,6 +12,7 @@
 		8DD76F9F0486AA7600D96B5E /* pdfrasterize.1 in CopyFiles */ = {isa = PBXBuildFile; fileRef = C6859EA3029092ED04C91782 /* pdfrasterize.1 */; };
 		DACA94FD10D62D530084678C /* PDFRasterize.m in Sources */ = {isa = PBXBuildFile; fileRef = DACA94FB10D62D530084678C /* PDFRasterize.m */; };
 		DACA951010D62DB10084678C /* libddcli.a in Frameworks */ = {isa = PBXBuildFile; fileRef = DACA94D210D62C7B0084678C /* libddcli.a */; };
+		DACA98A610D65AD80084678C /* ApplicationServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DACA98A510D65AD80084678C /* ApplicationServices.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -60,13 +61,14 @@
 
 /* Begin PBXFileReference section */
 		08FB7796FE84155DC02AAC07 /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
-		08FB779EFE84155DC02AAC07 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = /System/Library/Frameworks/Foundation.framework; sourceTree = "<absolute>"; };
+		08FB779EFE84155DC02AAC07 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		32A70AAB03705E1F00C91783 /* pdfrasterize_Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pdfrasterize_Prefix.pch; sourceTree = "<group>"; };
 		8DD76FA10486AA7600D96B5E /* pdfrasterize */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = pdfrasterize; sourceTree = BUILT_PRODUCTS_DIR; };
 		C6859EA3029092ED04C91782 /* pdfrasterize.1 */ = {isa = PBXFileReference; lastKnownFileType = text.man; path = pdfrasterize.1; sourceTree = "<group>"; };
 		DACA94C110D62C7B0084678C /* ddcli.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = ddcli.xcodeproj; path = "ddcli-1.0/ddcli.xcodeproj"; sourceTree = "<group>"; };
 		DACA94FB10D62D530084678C /* PDFRasterize.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PDFRasterize.m; sourceTree = "<group>"; };
 		DACA94FC10D62D530084678C /* PDFRasterize.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PDFRasterize.h; sourceTree = "<group>"; };
+		DACA98A510D65AD80084678C /* ApplicationServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ApplicationServices.framework; path = System/Library/Frameworks/ApplicationServices.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -76,6 +78,7 @@
 			files = (
 				DACA951010D62DB10084678C /* libddcli.a in Frameworks */,
 				8DD76F9C0486AA7600D96B5E /* Foundation.framework in Frameworks */,
+				DACA98A610D65AD80084678C /* ApplicationServices.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -108,6 +111,7 @@
 		08FB779DFE84155DC02AAC07 /* External Frameworks and Libraries */ = {
 			isa = PBXGroup;
 			children = (
+				DACA98A510D65AD80084678C /* ApplicationServices.framework */,
 				08FB779EFE84155DC02AAC07 /* Foundation.framework */,
 			);
 			name = "External Frameworks and Libraries";
