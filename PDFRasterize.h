@@ -10,8 +10,12 @@
 
 @interface PDFRasterize : NSObject <DDCliApplicationDelegate>
 {
-    NSString *outputDir;
-    BOOL help;
+	// options
+	NSString *format;
+	NSString *outputDir;
+	BOOL help;
+	
+	NSMutableDictionary *bitmapFormatUTIs;
 }
 
 - (int) rasterize:(NSString *)pdfPath;

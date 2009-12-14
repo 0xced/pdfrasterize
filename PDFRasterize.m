@@ -18,6 +18,14 @@
 	if (self != nil) {
 		help = NO;
 		outputDir = @".";
+		
+		bitmapFormatUTIs = [[NSMutableDictionary alloc] initWithCapacity:5];
+		[bitmapFormatUTIs setObject:(id)kUTTypeJPEG     forKey:@"jpg"];
+		[bitmapFormatUTIs setObject:(id)kUTTypeJPEG2000 forKey:@"jp2"];
+		[bitmapFormatUTIs setObject:(id)kUTTypeTIFF     forKey:@"tiff"];
+		[bitmapFormatUTIs setObject:(id)kUTTypeGIF      forKey:@"gif"];
+		[bitmapFormatUTIs setObject:(id)kUTTypePNG      forKey:@"png"];
+		[bitmapFormatUTIs setObject:(id)kUTTypeBMP      forKey:@"bmp"];
 	}
 	return self;
 }
@@ -27,11 +35,22 @@
 	DDGetoptOption optionTable[] = 
 	{
 	    // Long         Short   Argument options
+	    {@"format",     'f',    DDGetoptRequiredArgument},
 	    {@"output-dir", 'o',    DDGetoptRequiredArgument},
 	    {@"help",       'h',    DDGetoptNoArgument},
 	    {nil,           0,      0},
 	};
 	[optionsParser addOptionsFromTable: optionTable];
+}
+
+- (void) setFormat:(NSString *)theFormat
+{
+	NSString *formatId = [theFormat lowercaseString];
+	if ([[bitmapFormatUTIs allKeys] containsObject:formatId]) {
+		format = [formatId copy]; // leaked, but we don't care
+	} else {
+		@throw [DDCliParseException parseExceptionWithReason:[NSString stringWithFormat:@"Unknown format: %@", formatId] exitCode:EX_USAGE];
+	}
 }
 
 - (void) setOutputDir:(NSString *)theOutputDir
@@ -96,10 +115,10 @@
 	CGImageRef pdfImage = CGBitmapContextCreateImage(context);
 	
 	NSString *baseName = [[pdfPath lastPathComponent] stringByDeletingPathExtension];
-	NSString *outputPath = [[outputDir stringByAppendingPathComponent:baseName] stringByAppendingPathExtension:@"png"];
+	NSString *outputPath = [[outputDir stringByAppendingPathComponent:baseName] stringByAppendingPathExtension:format];
 	NSURL *outputURL = [NSURL fileURLWithPath:outputPath];
 	
-	CGImageDestinationRef destination = CGImageDestinationCreateWithURL((CFURLRef)outputURL, kUTTypePNG, 1, NULL);
+	CGImageDestinationRef destination = CGImageDestinationCreateWithURL((CFURLRef)outputURL, (CFStringRef)[bitmapFormatUTIs objectForKey:format], 1, NULL);
 	CGImageDestinationAddImage(destination, pdfImage, NULL);
 	bool success = CGImageDestinationFinalize(destination);
 	
