@@ -64,7 +64,7 @@
 {
 	NSScanner *scanner = [NSScanner scannerWithString:theScaleFactor];
 	BOOL validFloat = [scanner scanFloat:&scale];
-	if (!(validFloat && [scanner isAtEnd])) {
+	if (!(validFloat && scale > 0 && [scanner isAtEnd])	) {
 		@throw [DDCliParseException parseExceptionWithReason:[NSString stringWithFormat:@"Invalid scale factor: %@", theScaleFactor] exitCode:EX_USAGE];
 	}
 }
@@ -231,6 +231,11 @@
 		CGContextDrawPDFPage(context, page);
 		
 		CGImageRef pdfImage = CGBitmapContextCreateImage(context);
+		
+		if (!pdfImage) {
+			// May happen when scale is very low, and width/height becomes 0.
+			exit(EXIT_FAILURE);
+		}
 		
 		NSString *outputFormat = [NSString stringWithFormat:@"%%@-%%0%.0fd", floorf(log10f(pageCount)) + 1];
 		NSString *outputName = [NSString stringWithFormat:outputFormat, baseName, pageNumber];
