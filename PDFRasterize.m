@@ -10,17 +10,16 @@
 
 @implementation PDFRasterize
 
-// MARK: Options handling
-
 - (id) init
 {
 	self = [super init];
 	if (self != nil) {
 		help = NO;
-		format = @"png";
 		outputDir = @".";
+		format = @"png";
+		transparent = NO;
 		
-		bitmapFormatUTIs = [[NSMutableDictionary alloc] initWithCapacity:5];
+		bitmapFormatUTIs = [[NSMutableDictionary alloc] initWithCapacity:6];
 		[bitmapFormatUTIs setObject:(id)kUTTypeJPEG     forKey:@"jpg"];
 		[bitmapFormatUTIs setObject:(id)kUTTypeJPEG2000 forKey:@"jp2"];
 		[bitmapFormatUTIs setObject:(id)kUTTypeTIFF     forKey:@"tiff"];
@@ -31,17 +30,20 @@
 	return self;
 }
 
+// MARK: Options handling
+
 - (void) application:(DDCliApplication *)app willParseOptions:(DDGetoptLongParser *)optionsParser;
 {
 	DDGetoptOption optionTable[] = 
 	{
-	    // Long         Short   Argument options
-	    {@"format",     'f',    DDGetoptRequiredArgument},
-	    {@"output-dir", 'o',    DDGetoptRequiredArgument},
-	    {@"help",       'h',    DDGetoptNoArgument},
-	    {nil,           0,      0},
+	    // Long          Short   Argument options
+	    {@"format",      'f',    DDGetoptRequiredArgument},
+	    {@"transparent", 't',    DDGetoptNoArgument},
+	    {@"output-dir",  'o',    DDGetoptRequiredArgument},
+	    {@"help",        'h',    DDGetoptNoArgument},
+	    {nil,             0,     0},
 	};
-	[optionsParser addOptionsFromTable: optionTable];
+	[optionsParser addOptionsFromTable:optionTable];
 }
 
 - (void) setFormat:(NSString *)theFormat
@@ -70,6 +72,14 @@
 	}
 }
 
+- (BOOL) transparentBackground
+{
+	BOOL supportsAlpha = [format isEqualToString:@"png"] || [format isEqualToString:@"tiff"];
+	return transparent && supportsAlpha;
+}
+
+// MARK: CLI handling
+
 - (void) printUsage:(FILE *)stream;
 {
 	ddfprintf(stream, @"Usage: %@ [options] file\n", DDCliApp);
@@ -92,6 +102,8 @@
 	return [self rasterize:pdfPath];
 }
 
+// MARK: Rasterization
+
 - (int) rasterize:(NSString *)pdfPath
 {
 	bool success = true;
@@ -113,8 +125,12 @@
 		
 		CGContextRef context = CGBitmapContextCreate(bitmapData, width, height, 8, bytesPerLine, colorSpace, kCGImageAlphaPremultipliedFirst);
 		
-		CGContextSetRGBFillColor(context, 1, 1, 1, 1); // white
-		CGContextFillRect(context, CGRectMake(0, 0, width, height));
+		if ([self transparentBackground]) {
+			CGContextClearRect(context, CGRectMake(0, 0, width, height));
+		} else {
+			CGContextSetRGBFillColor(context, 1, 1, 1, 1); // white
+			CGContextFillRect(context, CGRectMake(0, 0, width, height));
+		}
 		
 		CGContextDrawPDFPage(context, page);
 		
