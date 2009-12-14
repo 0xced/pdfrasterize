@@ -41,7 +41,7 @@
 	
 	if (fileExists) {
 		if (isDirectory) {
-			outputDir = [theOutputDir copy];
+			outputDir = [theOutputDir copy]; // leaked, but we don't care
 		} else {
 			@throw [DDCliParseException parseExceptionWithReason:@"Invalid output directory" exitCode:ENOENT];
 		}
@@ -102,6 +102,12 @@
 	CGImageDestinationRef destination = CGImageDestinationCreateWithURL((CFURLRef)outputURL, kUTTypePNG, 1, NULL);
 	CGImageDestinationAddImage(destination, pdfImage, NULL);
 	bool success = CGImageDestinationFinalize(destination);
+	
+	CFRelease(destination);
+	CGImageRelease(pdfImage);
+	CGContextRelease(context);
+	CGColorSpaceRelease(colorSpace);
+	CGPDFDocumentRelease(pdfDocument);
 	
 	return success ? EXIT_SUCCESS : EXIT_FAILURE;
 }
