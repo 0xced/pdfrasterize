@@ -209,7 +209,12 @@
 		size_t width = roundf(boxRect.size.width * scale);
 		size_t height = roundf(boxRect.size.height * scale);
 		size_t bytesPerLine = width * 4;
-		void *bitmapData = calloc(height * bytesPerLine, 1);
+		uint64_t size = (uint64_t)height * (uint64_t)bytesPerLine;
+		void *bitmapData = malloc(size);
+		if (!bitmapData || (size > SIZE_MAX)) {
+			ddfprintf(stderr, @"%@: Out of memory, try to reduce the scale factor\n", DDCliApp);
+			exit(EXIT_FAILURE);
+		}
 		CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
 		
 		CGContextRef context = CGBitmapContextCreate(bitmapData, width, height, 8, bytesPerLine, colorSpace, kCGImageAlphaPremultipliedFirst);
