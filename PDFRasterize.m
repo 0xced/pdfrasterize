@@ -18,6 +18,7 @@
 		outputDir = @".";
 		format = @"png";
 		transparent = NO;
+		scale = 1.0;
 		
 		bitmapFormatUTIs = [[NSMutableDictionary alloc] initWithCapacity:6];
 		[bitmapFormatUTIs setObject:(id)kUTTypeJPEG     forKey:@"jpg"];
@@ -37,10 +38,11 @@
 	DDGetoptOption optionTable[] = 
 	{
 	    // Long          Short   Argument options
+	    {@"help",        'h',    DDGetoptNoArgument},
+	    {@"output-dir",  'o',    DDGetoptRequiredArgument},
 	    {@"format",      'f',    DDGetoptRequiredArgument},
 	    {@"transparent", 't',    DDGetoptNoArgument},
-	    {@"output-dir",  'o',    DDGetoptRequiredArgument},
-	    {@"help",        'h',    DDGetoptNoArgument},
+	    {@"scale",       's',    DDGetoptRequiredArgument},
 	    {nil,             0,     0},
 	};
 	[optionsParser addOptionsFromTable:optionTable];
@@ -53,6 +55,15 @@
 		format = [formatId copy]; // leaked, but we don't care
 	} else {
 		@throw [DDCliParseException parseExceptionWithReason:[NSString stringWithFormat:@"Unknown format: %@", formatId] exitCode:EX_USAGE];
+	}
+}
+
+- (void) setScale:(NSString *)theScaleFactor
+{
+	NSScanner *scanner = [NSScanner scannerWithString:theScaleFactor];
+	BOOL validFloat = [scanner scanFloat:&scale];
+	if (!(validFloat && [scanner isAtEnd])) {
+		@throw [DDCliParseException parseExceptionWithReason:[NSString stringWithFormat:@"Invalid scale factor: %@", theScaleFactor] exitCode:EX_USAGE];
 	}
 }
 
@@ -86,6 +97,7 @@
 	         @"    -o, --output-dir DIR          Rasterized files go into DIR -- Default is current working directory\n"
 	         @"    -f, --format FORMAT           Output format (%@) -- Default is png\n"
 	         @"    -t, --transparent             Draw a transparent background instead of white (png and tiff formats only)\n"
+	         @"    -s, --scale FACTOR            Scale factor, must be positive -- Default is 1.0\n"
 	         @"    -h, --help                    Display this help and exit\n",
 	         [[[bitmapFormatUTIs allKeys] sortedArrayUsingSelector:@selector(compare:)] componentsJoinedByString:@"/"]);
 }
@@ -133,8 +145,8 @@
 		CGPDFPageRef page = CGPDFDocumentGetPage(pdfDocument, pageNumber);
 		CGRect boxRect = CGPDFPageGetBoxRect(page, kCGPDFCropBox);
 		
-		size_t width = roundf(boxRect.size.width);
-		size_t height = roundf(boxRect.size.height);
+		size_t width = roundf(boxRect.size.width * scale);
+		size_t height = roundf(boxRect.size.height * scale);
 		size_t bytesPerLine = width * 4;
 		void *bitmapData = calloc(height * bytesPerLine, 1);
 		CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
@@ -147,6 +159,8 @@
 			CGContextSetRGBFillColor(context, 1, 1, 1, 1); // white
 			CGContextFillRect(context, CGRectMake(0, 0, width, height));
 		}
+		
+		CGContextScaleCTM(context, scale, scale);
 		
 		CGContextDrawPDFPage(context, page);
 		
