@@ -131,35 +131,29 @@
 	ddfprintf(stream, @"Usage: %@ [options] file\n", DDCliApp);
 }
 
-- (void) printHelp
+- (void) printHelp:(FILE *)stream;
 {
-	[self printUsage:stdout];
-	ddprintf(@"Options:\n"
-	         @"    -o, --output-dir DIR          Rasterized files go into DIR -- Default is current working directory\n"
-	         @"    -f, --format FORMAT           Output format (%@) -- Default is png\n"
-	         @"    -t, --transparent             Draw a transparent background instead of white (png and tiff formats only)\n"
-	         @"    -s, --scale FACTOR            Scale factor, must be positive -- Default is 1.0\n"
-	         @"    -p, --pages RANGE             Comma separated ranges of pages (e.g. 1,3-5,7) -- Default is all pages\n"
-	         @"    -h, --help                    Display this help and exit\n",
-	         [[[bitmapFormatUTIs allKeys] sortedArrayUsingSelector:@selector(compare:)] componentsJoinedByString:@"/"]);
+	[self printUsage:stream];
+	ddfprintf(stream, @"Options:\n"
+	          @"    -o, --output-dir DIR          Rasterized files go into DIR -- Default is current working directory\n"
+	          @"    -f, --format FORMAT           Output format (%@) -- Default is png\n"
+	          @"    -t, --transparent             Draw a transparent background instead of white (png and tiff formats only)\n"
+	          @"    -s, --scale FACTOR            Scale factor, must be positive -- Default is 1.0\n"
+	          @"    -p, --pages RANGE             Comma separated ranges of pages (e.g. 1,3-5,7) -- Default is all pages\n"
+	          @"    -h, --help                    Display this help and exit\n",
+	          [[[bitmapFormatUTIs allKeys] sortedArrayUsingSelector:@selector(compare:)] componentsJoinedByString:@"/"]);
 }
 
 - (int) application:(DDCliApplication *)app runWithArguments:(NSArray *)arguments;
 {
-	if (help) {
-		[self printHelp];
-		return EXIT_SUCCESS;
+	if (help || [arguments count] < 1) {
+		[self printHelp:help ? stdout : stderr];
+		return help ? EXIT_SUCCESS : EX_USAGE;
 	}
 	
 	BOOL supportsAlpha = [format isEqualToString:@"png"] || [format isEqualToString:@"tiff"];
 	if (transparent && !supportsAlpha) {
 		ddfprintf(stderr, @"%@: The %@ format does not support transparency\n", DDCliApp, format);
-		return EXIT_FAILURE;
-	}
-	
-	if ([arguments count] < 1) {
-		ddfprintf(stderr, @"%@: At least one pdf file is required\n", DDCliApp);
-		[self printUsage:stderr];
 		return EX_USAGE;
 	}
 	
