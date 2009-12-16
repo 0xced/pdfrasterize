@@ -164,7 +164,7 @@
 
 - (int) application:(DDCliApplication *)app runWithArguments:(NSArray *)arguments;
 {
-	if (help || [arguments count] < 1) {
+	if (help || [arguments count] != 1) {
 		[self printHelp:help ? stdout : stderr];
 		return help ? EX_OK : EX_USAGE;
 	}
