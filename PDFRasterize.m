@@ -32,6 +32,11 @@
 	return self;
 }
 
+- (NSArray *) supportedFormats
+{
+	return [[bitmapFormatUTIs allKeys] sortedArrayUsingSelector:@selector(compare:)];
+}
+
 // MARK: Options handling
 
 - (void) application:(DDCliApplication *)app willParseOptions:(DDGetoptLongParser *)optionsParser;
@@ -53,10 +58,11 @@
 - (void) setFormat:(NSString *)theFormat
 {
 	NSString *formatId = [theFormat lowercaseString];
-	if ([[bitmapFormatUTIs allKeys] containsObject:formatId]) {
+	NSArray *supportedFormats = [self supportedFormats];
+	if ([supportedFormats containsObject:formatId]) {
 		format = [formatId copy]; // leaked, but we don't care
 	} else {
-		@throw [DDCliParseException parseExceptionWithReason:[NSString stringWithFormat:@"Unknown format: %@", formatId] exitCode:EX_USAGE];
+		@throw [DDCliParseException parseExceptionWithReason:[NSString stringWithFormat:@"Unknown format: %@. Supported formats are %@", formatId, [supportedFormats componentsJoinedByString:@"/"]] exitCode:EX_USAGE];
 	}
 }
 
@@ -144,7 +150,7 @@
 	          @"    -s, --scale FACTOR            Scale factor, must be positive -- Default is 1.0\n"
 	          @"    -p, --pages RANGE             Comma separated ranges of pages (e.g. 1,3-5,7) -- Default is all pages\n"
 	          @"    -h, --help                    Display this help and exit\n",
-	          [[[bitmapFormatUTIs allKeys] sortedArrayUsingSelector:@selector(compare:)] componentsJoinedByString:@"/"]);
+	          [[self supportedFormats] componentsJoinedByString:@"/"]);
 }
 
 - (int) application:(DDCliApplication *)app runWithArguments:(NSArray *)arguments;
