@@ -22,12 +22,15 @@
 		pages = nil;
 		
 		bitmapFormatUTIs = [[NSMutableDictionary alloc] initWithCapacity:6];
-		[bitmapFormatUTIs setObject:(id)kUTTypeJPEG     forKey:@"jpg"];
-		[bitmapFormatUTIs setObject:(id)kUTTypeJPEG2000 forKey:@"jp2"];
-		[bitmapFormatUTIs setObject:(id)kUTTypeTIFF     forKey:@"tiff"];
-		[bitmapFormatUTIs setObject:(id)kUTTypeGIF      forKey:@"gif"];
-		[bitmapFormatUTIs setObject:(id)kUTTypePNG      forKey:@"png"];
-		[bitmapFormatUTIs setObject:(id)kUTTypeBMP      forKey:@"bmp"];
+		[bitmapFormatUTIs setObject:(id)kUTTypeJPEG              forKey:@"jpg"];
+		[bitmapFormatUTIs setObject:(id)kUTTypeJPEG2000          forKey:@"jp2"];
+		[bitmapFormatUTIs setObject:(id)kUTTypeTIFF              forKey:@"tiff"];
+		[bitmapFormatUTIs setObject:(id)kUTTypeGIF               forKey:@"gif"];
+		[bitmapFormatUTIs setObject:(id)kUTTypePNG               forKey:@"png"];
+		[bitmapFormatUTIs setObject:(id)kUTTypeBMP               forKey:@"bmp"];
+		[bitmapFormatUTIs setObject:@"com.adobe.photoshop-image" forKey:@"psd"];
+		[bitmapFormatUTIs setObject:@"com.sgi.sgi-image"         forKey:@"sgi"];
+		[bitmapFormatUTIs setObject:@"com.truevision.tga-image"  forKey:@"tga"];
 	}
 	return self;
 }
@@ -35,6 +38,11 @@
 - (NSArray *) supportedFormats
 {
 	return [[bitmapFormatUTIs allKeys] sortedArrayUsingSelector:@selector(compare:)];
+}
+
+- (NSArray *) transparentFormats
+{
+	return [NSArray arrayWithObjects:@"png", @"psd", @"sgi", @"tga", @"tiff", nil];
 }
 
 // MARK: Options handling
@@ -146,11 +154,12 @@
 	ddfprintf(stream, @"Options:\n"
 	          @"    -o, --output-dir DIR          Rasterized files go into DIR -- Default is current working directory\n"
 	          @"    -f, --format FORMAT           Output format (%@) -- Default is png\n"
-	          @"    -t, --transparent             Draw a transparent background instead of white (png and tiff formats only)\n"
+	          @"    -t, --transparent             Draw a transparent background instead of white (%@ formats only)\n"
 	          @"    -s, --scale FACTOR            Scale factor, must be positive -- Default is 1.0\n"
 	          @"    -p, --pages RANGE             Comma separated ranges of pages (e.g. 1,3-5,7) -- Default is all pages\n"
 	          @"    -h, --help                    Display this help and exit\n",
-	          [[self supportedFormats] componentsJoinedByString:@"/"]);
+	          [[self supportedFormats] componentsJoinedByString:@"/"],
+	          [[self transparentFormats] componentsJoinedByString:@"/"]);
 }
 
 - (int) application:(DDCliApplication *)app runWithArguments:(NSArray *)arguments;
@@ -160,7 +169,7 @@
 		return help ? EX_OK : EX_USAGE;
 	}
 	
-	BOOL supportsAlpha = [format isEqualToString:@"png"] || [format isEqualToString:@"tiff"];
+	BOOL supportsAlpha = [[self transparentFormats] containsObject:format];
 	if (transparent && !supportsAlpha) {
 		ddfprintf(stderr, @"%@: The %@ format does not support transparency\n", DDCliApp, format);
 		return EX_USAGE;
