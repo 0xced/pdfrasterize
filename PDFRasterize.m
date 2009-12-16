@@ -115,12 +115,15 @@
 	
 	if (fileExists) {
 		if (isDirectory) {
+			if (![[NSFileManager defaultManager] isWritableFileAtPath:theOutputDir]) {
+				@throw [DDCliParseException parseExceptionWithReason:@"Output directory is not writable" exitCode:EX_CANTCREAT];
+			}
 			outputDir = [theOutputDir copy]; // leaked, but we don't care
 		} else {
-			@throw [DDCliParseException parseExceptionWithReason:@"Invalid output directory" exitCode:ENOENT];
+			@throw [DDCliParseException parseExceptionWithReason:@"Invalid output directory" exitCode:EX_USAGE];
 		}
 	} else {
-		@throw [DDCliParseException parseExceptionWithReason:@"Output directory does not exist" exitCode:ENOENT];
+		@throw [DDCliParseException parseExceptionWithReason:@"Output directory does not exist" exitCode:EX_USAGE];
 	}
 }
 
@@ -148,7 +151,7 @@
 {
 	if (help || [arguments count] < 1) {
 		[self printHelp:help ? stdout : stderr];
-		return help ? EXIT_SUCCESS : EX_USAGE;
+		return help ? EX_OK : EX_USAGE;
 	}
 	
 	BOOL supportsAlpha = [format isEqualToString:@"png"] || [format isEqualToString:@"tiff"];
@@ -160,15 +163,15 @@
 	NSString *pdfPath = [arguments objectAtIndex:0];
 	if (![[NSFileManager defaultManager] fileExistsAtPath:pdfPath]) {
 		ddfprintf(stderr, @"%@: %@: No such file\n", DDCliApp, pdfPath);
-		return ENOENT;
+		return EX_NOINPUT;
 	}
 	
 	NSURL *pdfURL = [NSURL fileURLWithPath:pdfPath];
 	CGPDFDocumentRef pdfDocument = CGPDFDocumentCreateWithURL((CFURLRef)pdfURL);
 	
 	if (!pdfDocument) {
-		ddfprintf(stderr, @"%@: Invalid PDF file\n", DDCliApp);
-		return EXIT_FAILURE;
+		ddfprintf(stderr, @"%@: %@: Invalid PDF file\n", DDCliApp, pdfPath);
+		return EX_DATAERR;
 	}
 	
 	size_t pageCount = CGPDFDocumentGetNumberOfPages(pdfDocument);
@@ -189,7 +192,7 @@
 	NSString *baseName = [[pdfPath lastPathComponent] stringByDeletingPathExtension];
 	bool success = [self rasterize:pdfDocument baseName:baseName];
 	
-	return success ? EXIT_SUCCESS : EXIT_FAILURE;
+	return success ? EX_OK : EX_SOFTWARE;
 }
 
 // MARK: Rasterization
@@ -213,7 +216,7 @@
 		void *bitmapData = malloc(size);
 		if (!bitmapData || (size > SIZE_MAX)) {
 			ddfprintf(stderr, @"%@: Out of memory, try to reduce the scale factor\n", DDCliApp);
-			exit(EXIT_FAILURE);
+			exit(EX_OSERR);
 		}
 		CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
 		
@@ -231,10 +234,9 @@
 		CGContextDrawPDFPage(context, page);
 		
 		CGImageRef pdfImage = CGBitmapContextCreateImage(context);
-		
 		if (!pdfImage) {
 			// May happen when scale is very low, and width/height becomes 0.
-			exit(EXIT_FAILURE);
+			exit(EX_SOFTWARE);
 		}
 		
 		NSString *outputFormat = [NSString stringWithFormat:@"%%@-%%0%.0fd", floorf(log10f(pageCount)) + 1];
@@ -243,6 +245,11 @@
 		NSURL *outputURL = [NSURL fileURLWithPath:outputPath];
 		
 		CGImageDestinationRef destination = CGImageDestinationCreateWithURL((CFURLRef)outputURL, (CFStringRef)[bitmapFormatUTIs objectForKey:format], 1, NULL);
+		if (!destination) {
+			// CGImageDestinationCreateWithURL is not documented it may return NULL,
+			// but it does if the output url points to a non writable directory
+			exit(EX_SOFTWARE);
+		}
 		CGImageDestinationAddImage(destination, pdfImage, NULL);
 		success = success && CGImageDestinationFinalize(destination);
 		
