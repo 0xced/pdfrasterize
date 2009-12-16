@@ -244,7 +244,10 @@
 			CGContextFillRect(context, CGRectMake(0, 0, width, height));
 		}
 		
+		// CGPDFPageGetDrawingTransform unfortunately does not upscale, see http://lists.apple.com/archives/quartz-dev/2005/Mar/msg00112.html
+		CGContextRotateCTM(context, CGPDFPageGetRotationAngle(page));
 		CGContextScaleCTM(context, scale, scale);
+		CGContextTranslateCTM(context, -boxRect.origin.x, -boxRect.origin.y);
 		
 		CGContextDrawPDFPage(context, page);
 		
