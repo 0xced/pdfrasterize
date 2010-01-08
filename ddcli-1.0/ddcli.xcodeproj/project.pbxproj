@@ -432,6 +432,7 @@
 				INSTALL_PATH = /usr/local/lib;
 				PREBINDING = NO;
 				PRODUCT_NAME = ddcli;
+				SKIP_INSTALL = YES;
 				ZERO_LINK = NO;
 			};
 			name = Debug;
@@ -447,6 +448,7 @@
 				INSTALL_PATH = /usr/local/lib;
 				PREBINDING = NO;
 				PRODUCT_NAME = ddcli;
+				SKIP_INSTALL = YES;
 				ZERO_LINK = NO;
 			};
 			name = Release;
