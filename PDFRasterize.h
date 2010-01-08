@@ -11,13 +11,12 @@
 @interface PDFRasterize : NSObject <DDCliApplicationDelegate>
 {
 	// options
-	BOOL help;
 	NSString *outputDir;
 	NSString *format;
 	BOOL transparent;
 	float scale;
 	NSMutableSet *pages;
-	
+
 	NSMutableDictionary *bitmapFormatUTIs;
 }
 

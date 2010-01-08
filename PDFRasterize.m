@@ -14,13 +14,12 @@
 {
 	self = [super init];
 	if (self != nil) {
-		help = NO;
 		outputDir = @".";
 		format = @"png";
 		transparent = NO;
 		scale = 1.0;
 		pages = nil;
-		
+
 		bitmapFormatUTIs = [[NSMutableDictionary alloc] initWithCapacity:6];
 		[bitmapFormatUTIs setObject:(id)kUTTypeJPEG              forKey:@"jpg"];
 		[bitmapFormatUTIs setObject:(id)kUTTypeJPEG2000          forKey:@"jp2"];
@@ -49,10 +48,11 @@
 
 - (void) application:(DDCliApplication *)app willParseOptions:(DDGetoptLongParser *)optionsParser;
 {
-	DDGetoptOption optionTable[] = 
+	DDGetoptOption optionTable[] =
 	{
 	    // Long          Short   Argument options
 	    {@"help",        'h',    DDGetoptNoArgument},
+	    {@"version",     'V',    DDGetoptNoArgument},
 	    {@"output-dir",  'o',    DDGetoptRequiredArgument},
 	    {@"format",      'f',    DDGetoptRequiredArgument},
 	    {@"transparent", 't',    DDGetoptNoArgument},
@@ -86,19 +86,19 @@
 }
 
 - (void) setPages:(NSString *)thePages
-{	
+{
 	if (!pages) {
 		pages = [[NSMutableSet alloc] init];
 	}
 	[pages removeAllObjects];
-	
+
 	NSArray *ranges = [thePages componentsSeparatedByString:@","];
 	for (unsigned i = 0; i < [ranges count]; i++) {
 		NSString *range = [ranges objectAtIndex:i];
 		DDCliParseException *invalidPageRangesException = [DDCliParseException parseExceptionWithReason:[NSString stringWithFormat:@"Invalid page range: %@", [range length] > 0 ? range : @"<empty>"] exitCode:EX_USAGE];
 		NSScanner *scanner = [NSScanner scannerWithString:range];
 		int first, last;
-		
+
 		BOOL validFirst = [scanner scanInt:&first];
 		if (!(validFirst && first >= 1)) {
 			@throw invalidPageRangesException;
@@ -117,7 +117,7 @@
 				@throw invalidPageRangesException;
 			}
 		}
-		
+
 		for (int p = first; p <= last; p++) {
 			[pages addObject:[NSNumber numberWithInt:p]];
 		}
@@ -128,7 +128,7 @@
 {
 	BOOL isDirectory;
 	BOOL fileExists = [[NSFileManager defaultManager] fileExistsAtPath:theOutputDir isDirectory:&isDirectory];
-	
+
 	if (fileExists) {
 		if (isDirectory) {
 			if (![[NSFileManager defaultManager] isWritableFileAtPath:theOutputDir]) {
@@ -152,6 +152,11 @@
 	ddfprintf(stream, @"Usage: %@ [options] file\n", DDCliApp);
 }
 
+- (void) printVersion:(FILE *)stream;
+{
+	ddfprintf(stream, @"%@ 1.0\n", DDCliApp);
+}
+
 - (void) printHelp:(FILE *)stream;
 {
 	[self printUsage:stream];
@@ -161,56 +166,69 @@
 	          @"    -t, --transparent             Draw a transparent background instead of white (%@ formats only)\n"
 	          @"    -s, --scale FACTOR            Scale factor, must be positive -- Default is 1.0\n"
 	          @"    -p, --pages RANGE             Comma separated ranges of pages (e.g. 1,3-5,7) -- Default is all pages\n"
-	          @"    -h, --help                    Display this help and exit\n",
+	          @"    -h, --help                    Display this help and exit\n"
+	          @"    -V, --version                 Display version information and exit\n",
 	          [[self supportedFormats] componentsJoinedByString:@"/"],
 	          [[self transparentFormats] componentsJoinedByString:@"/"]);
 }
 
+- (void) setVersion:(NSString *)version
+{
+	[self printVersion:stdout];
+	exit(EX_OK);
+}
+
+- (void) setHelp:(NSString *)help
+{
+	[self printHelp:stdout];
+	exit(EX_OK);
+}
+
 - (int) application:(DDCliApplication *)app runWithArguments:(NSArray *)arguments;
 {
-	if (help || [arguments count] != 1) {
-		[self printHelp:help ? stdout : stderr];
-		return help ? EX_OK : EX_USAGE;
+	if ([arguments count] != 1) {
+		[self printHelp:stderr];
+		return EX_USAGE;
 	}
-	
+
 	BOOL supportsAlpha = [[self transparentFormats] containsObject:format];
 	if (transparent && !supportsAlpha) {
 		ddfprintf(stderr, @"%@: The %@ format does not support transparency\n", DDCliApp, format);
 		return EX_USAGE;
 	}
-	
+
 	NSString *pdfPath = [arguments objectAtIndex:0];
 	if (![[NSFileManager defaultManager] fileExistsAtPath:pdfPath]) {
 		ddfprintf(stderr, @"%@: %@: No such file\n", DDCliApp, pdfPath);
 		return EX_NOINPUT;
 	}
-	
+
 	NSURL *pdfURL = [NSURL fileURLWithPath:pdfPath];
 	CGPDFDocumentRef pdfDocument = CGPDFDocumentCreateWithURL((CFURLRef)pdfURL);
-	
+
 	if (!pdfDocument) {
 		ddfprintf(stderr, @"%@: %@: Invalid PDF file\n", DDCliApp, pdfPath);
 		return EX_DATAERR;
 	}
-	
+
 	size_t pageCount = CGPDFDocumentGetNumberOfPages(pdfDocument);
-	
+
 	if (!pages) {
 		pages = [[NSMutableSet alloc] init];
 		for (size_t i = 1; i <= pageCount; i++) {
 			[pages addObject:[NSNumber numberWithInt:i]];
 		}
 	}
-	
+
 	NSNumber *lastPageNumber = [[[pages allObjects] sortedArrayUsingSelector:@selector(compare:)] lastObject];
 	if ([lastPageNumber intValue] > pageCount) {
 		ddfprintf(stderr, @"%@: Document has no page %@ (last page is %d)\n", DDCliApp, lastPageNumber, pageCount);
 		return EX_USAGE;
 	}
-	
+
 	NSString *baseName = [[pdfPath lastPathComponent] stringByDeletingPathExtension];
 	bool success = [self rasterize:pdfDocument baseName:baseName];
-	
+
 	return success ? EX_OK : EX_SOFTWARE;
 }
 
@@ -219,7 +237,7 @@
 - (BOOL) rasterize:(CGPDFDocumentRef)pdfDocument baseName:(NSString *)baseName
 {
 	bool success = true;
-	
+
 	size_t pageCount = CGPDFDocumentGetNumberOfPages(pdfDocument);
 	NSArray *sortedPages = [[pages allObjects] sortedArrayUsingSelector:@selector(compare:)];
 	for (unsigned i = 0; i < [pages count]; i++)
@@ -227,7 +245,7 @@
 		size_t pageNumber = [[sortedPages objectAtIndex:i] intValue];
 		CGPDFPageRef page = CGPDFDocumentGetPage(pdfDocument, pageNumber);
 		CGRect boxRect = CGPDFPageGetBoxRect(page, kCGPDFCropBox);
-		
+
 		size_t width = roundf(boxRect.size.width * scale);
 		size_t height = roundf(boxRect.size.height * scale);
 		size_t bytesPerLine = width * 4;
@@ -238,34 +256,34 @@
 			exit(EX_OSERR);
 		}
 		CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
-		
+
 		CGContextRef context = CGBitmapContextCreate(bitmapData, width, height, 8, bytesPerLine, colorSpace, kCGImageAlphaPremultipliedFirst);
-		
+
 		if (transparent) {
 			CGContextClearRect(context, CGRectMake(0, 0, width, height));
 		} else {
 			CGContextSetRGBFillColor(context, 1, 1, 1, 1); // white
 			CGContextFillRect(context, CGRectMake(0, 0, width, height));
 		}
-		
+
 		// CGPDFPageGetDrawingTransform unfortunately does not upscale, see http://lists.apple.com/archives/quartz-dev/2005/Mar/msg00112.html
 		CGContextRotateCTM(context, CGPDFPageGetRotationAngle(page));
 		CGContextScaleCTM(context, scale, scale);
 		CGContextTranslateCTM(context, -boxRect.origin.x, -boxRect.origin.y);
-		
+
 		CGContextDrawPDFPage(context, page);
-		
+
 		CGImageRef pdfImage = CGBitmapContextCreateImage(context);
 		if (!pdfImage) {
 			// May happen when scale is very low, and width/height becomes 0.
 			exit(EX_SOFTWARE);
 		}
-		
+
 		NSString *outputFormat = [NSString stringWithFormat:@"%%@-%%0%.0fd", floorf(log10f(pageCount)) + 1];
 		NSString *outputName = [NSString stringWithFormat:outputFormat, baseName, pageNumber];
 		NSString *outputPath = [[outputDir stringByAppendingPathComponent:outputName] stringByAppendingPathExtension:format];
 		NSURL *outputURL = [NSURL fileURLWithPath:outputPath];
-		
+
 		CGImageDestinationRef destination = CGImageDestinationCreateWithURL((CFURLRef)outputURL, (CFStringRef)[bitmapFormatUTIs objectForKey:format], 1, NULL);
 		if (!destination) {
 			// CGImageDestinationCreateWithURL is not documented it may return NULL,
@@ -274,13 +292,13 @@
 		}
 		CGImageDestinationAddImage(destination, pdfImage, NULL);
 		success = success && CGImageDestinationFinalize(destination);
-		
+
 		CFRelease(destination);
 		CGImageRelease(pdfImage);
 		CGContextRelease(context);
 		CGColorSpaceRelease(colorSpace);
 	}
-	
+
 	return success;
 }
 
