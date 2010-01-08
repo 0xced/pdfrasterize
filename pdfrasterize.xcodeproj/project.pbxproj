@@ -50,7 +50,7 @@
 		8DD76F9E0486AA7600D96B5E /* CopyFiles */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 8;
-			dstPath = /usr/share/man/man1/;
+			dstPath = /share/man/man1/;
 			dstSubfolderSpec = 0;
 			files = (
 				8DD76F9F0486AA7600D96B5E /* pdfrasterize.1 in CopyFiles */,
@@ -245,7 +245,7 @@
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = pdfrasterize_Prefix.pch;
 				HEADER_SEARCH_PATHS = "ddcli-1.0/lib";
-				INSTALL_PATH = /usr/local/bin;
+				INSTALL_PATH = /bin;
 				PRODUCT_NAME = pdfrasterize;
 			};
 			name = Debug;
@@ -259,7 +259,7 @@
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = pdfrasterize_Prefix.pch;
 				HEADER_SEARCH_PATHS = "ddcli-1.0/lib";
-				INSTALL_PATH = /usr/local/bin;
+				INSTALL_PATH = /bin;
 				PRODUCT_NAME = pdfrasterize;
 			};
 			name = Release;
