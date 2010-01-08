@@ -3,77 +3,84 @@
 .\"man mdoc.samples for a complete listing of options
 .\"man mdoc for the short list of editing options
 .\"/usr/share/misc/mdoc.template
-.Dd 14.12.09               \" DATE 
-.Dt pdfrasterize 1      \" Program name and manual section number 
+.Dd 14.12.09             \" DATE
+.Dt pdfrasterize 1       \" Program name and manual section number
 .Os Darwin
-.Sh NAME                 \" Section Header - required - don't modify 
-.Nm pdfrasterize,
+.Sh NAME                 \" Section Header - required - don't modify
+.Nm pdfrasterize
 .\" The following lines are read in generating the apropos(man -k) database. Use only key
-.\" words here as the database is built based on the words here and in the .ND line. 
-.Nm Other_name_for_same_program(),
-.Nm Yet another name for the same program.
-.\" Use .Nm macro to designate other names for the documented program.
-.Nd This line parsed for whatis database.
+.\" words here as the database is built based on the words here and in the .ND line.
+.Nd rasterize PDF documents
 .Sh SYNOPSIS             \" Section Header - required - don't modify
 .Nm
-.Op Fl abcd              \" [-abcd]
-.Op Fl a Ar path         \" [-a path] 
-.Op Ar file              \" [file]
-.Op Ar                   \" [file ...]
-.Ar arg0                 \" Underlined argument - use .Ar anywhere to underline
-arg2 ...                 \" Arguments
+.Op options
+.Ar file                 \" file
 .Sh DESCRIPTION          \" Section Header - required - don't modify
-Use the .Nm macro to refer to your program throughout the man page like such:
 .Nm
-Underlining is accomplished with the .Ar macro like this:
-.Ar underlined text .
+converts a PDF document to bitmap files. Each PDF page is saved into a bitmap file. The bitmap file name is composed from the base name of the PDF file and the page number, prefixed with the adequate number of zeros so that all output file names are the same length.
+.Sh OPTIONS
 .Pp                      \" Inserts a space
-A list of items with descriptions:
-.Bl -tag -width -indent  \" Begins a tagged list 
-.It item a               \" Each item preceded by .It macro
-Description of item a
-.It item b
-Description of item b
-.El                      \" Ends the list
+The following options are available:
+.Bl -tag -width -indent  \" Begins a tagged list
+.It Fl h | -help
+Print a summary of available commands and exit. No conversion is performed.
+.It Fl o | -output-dir Ar dir
+Sets the output directory to
+.Ar dir
+for converted bitmap files. It must point to an existing, writable directory. The default output directory is the current working directory.
+.It Fl f | -format Ar fmt
+Set bitmap file output format to
+.Ar fmt .
+The default format is png. Supported formats are:
 .Pp
-A list of flags and their descriptions:
-.Bl -tag -width -indent  \" Differs from above in tag removed 
-.It Fl a                 \"-a flag as a list item
-Description of -a flag
-.It Fl b
-Description of -b flag
-.El                      \" Ends the list
+.Ar png
+Portable Network Graphics
 .Pp
-.\" .Sh ENVIRONMENT      \" May not be needed
-.\" .Bl -tag -width "ENV_VAR_1" -indent \" ENV_VAR_1 is width of the string ENV_VAR_1
-.\" .It Ev ENV_VAR_1
-.\" Description of ENV_VAR_1
-.\" .It Ev ENV_VAR_2
-.\" Description of ENV_VAR_2
-.\" .El                      
-.Sh FILES                \" File used or created by the topic of the man page
-.Bl -tag -width "/Users/joeuser/Library/really_long_file_name" -compact
-.It Pa /usr/share/file_name
-FILE_1 description
-.It Pa /Users/joeuser/Library/really_long_file_name
-FILE_2 description
+.Ar jp2
+JPEG 2000
+.Pp
+.Ar jpg
+JPEG
+.Pp
+.Ar tiff
+Tagged Image File Format
+.Pp
+.Ar gif
+Graphics Interchange Format
+.Pp
+.Ar bmp
+Windows bitmap
+.Pp
+.Ar psd
+Adobe Photoshop document
+.Pp
+.Ar sgi
+Silicon Graphics Image
+.Pp
+.Ar tga
+Truevision TGA
+.It Fl t | -transparent
+Draw a transparent background instead of the default white background. This is only supported for
+.Ar png ,
+.Ar psd ,
+.Ar sgi ,
+.Ar tga
+and
+.Ar tiff
+formats. No conversion will be performed if this option is used with another format.
+.It Fl s | -scale Ar factor
+Scale
+.Ar factor
+Default is 1.0. Use a factor >1.0 if you want higher quality rendering or <1.0 of you want thumbnails.
+.It Fl p | -pages Ar ranges
+Convert only specified pages. The
+.Ar ranges
+argument is a list of comma separated page ranges. E.g. 1,3-5,7 which is equivalent to 1,3,4,5,7 that would convert only pages 1, 3, 4, 5 and 7.
 .El                      \" Ends the list
-.\" .Sh DIAGNOSTICS       \" May not be needed
-.\" .Bl -diag
-.\" .It Diagnostic Tag
-.\" Diagnostic informtion here.
-.\" .It Diagnostic Tag
-.\" Diagnostic informtion here.
-.\" .El
-.Sh SEE ALSO 
-.\" List links in ascending order by section, alphabetically within a section.
-.\" Please do not reference files that do not exist without filing a bug report
-.Xr a 1 , 
-.Xr b 1 ,
-.Xr c 1 ,
-.Xr a 2 ,
-.Xr b 2 ,
-.Xr a 3 ,
-.Xr b 3 
-.\" .Sh BUGS              \" Document known, unremedied bugs 
-.\" .Sh HISTORY           \" Document history if command behaves in a unique manner
+.Sh EXIT STATUS
+.Nm
+exits with 0 on success, and with >0 if an error occurs.
+.Sh SEE ALSO
+pdf2ppm(1)
+.Sh AUTHOR
+(c) 2009-2010 Cedric Luthi <cedric.luthi@gmail.com>
