@@ -68,7 +68,9 @@
 	NSString *formatId = [theFormat lowercaseString];
 	NSArray *supportedFormats = [self supportedFormats];
 	if ([supportedFormats containsObject:formatId]) {
-		format = [formatId copy]; // leaked, but we don't care
+		[formatId retain];
+		[format release];
+		format = formatId;
 	} else {
 		@throw [DDCliParseException parseExceptionWithReason:[NSString stringWithFormat:@"Unknown format: %@. Supported formats are %@", formatId, [supportedFormats componentsJoinedByString:@"/"]] exitCode:EX_USAGE];
 	}
@@ -132,7 +134,9 @@
 			if (![[NSFileManager defaultManager] isWritableFileAtPath:theOutputDir]) {
 				@throw [DDCliParseException parseExceptionWithReason:@"Output directory is not writable" exitCode:EX_CANTCREAT];
 			}
-			outputDir = [theOutputDir copy]; // leaked, but we don't care
+			[theOutputDir retain];
+			[outputDir release];
+			outputDir = theOutputDir;
 		} else {
 			@throw [DDCliParseException parseExceptionWithReason:@"Invalid output directory" exitCode:EX_USAGE];
 		}
