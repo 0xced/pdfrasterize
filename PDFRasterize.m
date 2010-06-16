@@ -20,16 +20,22 @@
 		scale = 1.0;
 		pages = nil;
 
-		bitmapFormatUTIs = [[NSMutableDictionary alloc] initWithCapacity:6];
-		[bitmapFormatUTIs setObject:(id)kUTTypeJPEG              forKey:@"jpg"];
-		[bitmapFormatUTIs setObject:(id)kUTTypeJPEG2000          forKey:@"jp2"];
-		[bitmapFormatUTIs setObject:(id)kUTTypeTIFF              forKey:@"tiff"];
-		[bitmapFormatUTIs setObject:(id)kUTTypeGIF               forKey:@"gif"];
-		[bitmapFormatUTIs setObject:(id)kUTTypePNG               forKey:@"png"];
-		[bitmapFormatUTIs setObject:(id)kUTTypeBMP               forKey:@"bmp"];
-		[bitmapFormatUTIs setObject:@"com.adobe.photoshop-image" forKey:@"psd"];
-		[bitmapFormatUTIs setObject:@"com.sgi.sgi-image"         forKey:@"sgi"];
-		[bitmapFormatUTIs setObject:@"com.truevision.tga-image"  forKey:@"tga"];
+		CFArrayRef destinationUTIs = CGImageDestinationCopyTypeIdentifiers();
+		CFIndex count = CFArrayGetCount(destinationUTIs);
+		bitmapFormatUTIs = [[NSMutableDictionary alloc] initWithCapacity:count];
+
+		for (CFIndex i = 0; i < count; i++)
+		{
+			CFStringRef uti = CFArrayGetValueAtIndex(destinationUTIs, i);
+			if (CFStringCompare(uti, kUTTypePDF, 0) != kCFCompareEqualTo)
+			{
+				CFStringRef preferredExtension = UTTypeCopyPreferredTagWithClass(uti, kUTTagClassFilenameExtension);
+				[bitmapFormatUTIs setObject:(id)uti forKey:(id)preferredExtension];
+				CFRelease(preferredExtension);
+			}
+		}
+
+		CFRelease(destinationUTIs);
 	}
 	return self;
 }
@@ -37,11 +43,6 @@
 - (NSArray *) supportedFormats
 {
 	return [[bitmapFormatUTIs allKeys] sortedArrayUsingSelector:@selector(compare:)];
-}
-
-- (NSArray *) transparentFormats
-{
-	return [NSArray arrayWithObjects:@"png", @"psd", @"sgi", @"tga", @"tiff", nil];
 }
 
 // MARK: Options handling
@@ -163,13 +164,12 @@
 	ddfprintf(stream, @"Options:\n"
 	          @"    -o, --output-dir DIR          Rasterized files go into DIR -- Default is current working directory\n"
 	          @"    -f, --format FORMAT           Output format (%@) -- Default is png\n"
-	          @"    -t, --transparent             Draw a transparent background instead of white (%@ formats only)\n"
+	          @"    -t, --transparent             Draw a transparent background instead of white (some formats do not support transparency)\n"
 	          @"    -s, --scale FACTOR            Scale factor, must be positive -- Default is 1.0\n"
 	          @"    -p, --pages RANGE             Comma separated ranges of pages (e.g. 1,3-5,7) -- Default is all pages\n"
 	          @"    -h, --help                    Display this help and exit\n"
 	          @"    -V, --version                 Display version information and exit\n",
-	          [[self supportedFormats] componentsJoinedByString:@"/"],
-	          [[self transparentFormats] componentsJoinedByString:@"/"]);
+	          [[self supportedFormats] componentsJoinedByString:@"/"]);
 }
 
 - (void) setVersion:(NSString *)version
@@ -188,12 +188,6 @@
 {
 	if ([arguments count] != 1) {
 		[self printHelp:stderr];
-		return EX_USAGE;
-	}
-
-	BOOL supportsAlpha = [[self transparentFormats] containsObject:format];
-	if (transparent && !supportsAlpha) {
-		ddfprintf(stderr, @"%@: The %@ format does not support transparency\n", DDCliApp, format);
 		return EX_USAGE;
 	}
 
