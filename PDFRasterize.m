@@ -228,6 +228,22 @@
 
 // MARK: Rasterization
 
+/* Return a normalized rotation between 0 and 3 */
+
+static int PDFPageGetRotation(CGPDFPageRef page)
+{
+	/* From the PDF Reference:
+	 * /Rotate: The number of degrees by which the page should be rotated clockwise when
+	 *          displayed or printed. The value must be a multiple of 90.
+	 */
+	int rotationAngle = CGPDFPageGetRotationAngle(page);
+	if (rotationAngle % 90 != 0) {
+		return 0;
+	} else {
+		return (4 + ((rotationAngle / 90) % 4)) % 4;
+	}
+}
+
 - (BOOL) rasterize:(CGPDFDocumentRef)pdfDocument baseName:(NSString *)baseName
 {
 	bool success = true;
@@ -239,9 +255,11 @@
 		size_t pageNumber = [[sortedPages objectAtIndex:i] intValue];
 		CGPDFPageRef page = CGPDFDocumentGetPage(pdfDocument, pageNumber);
 		CGRect boxRect = CGPDFPageGetBoxRect(page, kCGPDFCropBox);
+		int rotation = PDFPageGetRotation(page);
+		BOOL invertSize = (rotation % 2) == 1;
 
-		size_t width = roundf(boxRect.size.width * scale);
-		size_t height = roundf(boxRect.size.height * scale);
+		size_t width = scale * floorf(invertSize ? CGRectGetHeight(boxRect) : CGRectGetWidth(boxRect));
+		size_t height = scale * floorf(invertSize ? CGRectGetWidth(boxRect) : CGRectGetHeight(boxRect));
 		size_t bytesPerLine = width * 4;
 		uint64_t size = (uint64_t)height * (uint64_t)bytesPerLine;
 		void *bitmapData = malloc(size);
@@ -253,16 +271,29 @@
 
 		CGContextRef context = CGBitmapContextCreate(bitmapData, width, height, 8, bytesPerLine, colorSpace, kCGImageAlphaPremultipliedFirst);
 
+		CGContextSetRGBFillColor(context, 1, 1, 1, 1); // white
+		CGContextFillRect(context, CGRectMake(0, 0, width, height));
 		if (transparent) {
 			CGContextClearRect(context, CGRectMake(0, 0, width, height));
-		} else {
-			CGContextSetRGBFillColor(context, 1, 1, 1, 1); // white
-			CGContextFillRect(context, CGRectMake(0, 0, width, height));
 		}
 
 		// CGPDFPageGetDrawingTransform unfortunately does not upscale, see http://lists.apple.com/archives/quartz-dev/2005/Mar/msg00112.html
-		CGContextRotateCTM(context, CGPDFPageGetRotationAngle(page));
 		CGContextScaleCTM(context, scale, scale);
+		CGContextRotateCTM(context, -(rotation * M_PI_2));
+		switch (rotation) {
+			case 1:
+				CGContextTranslateCTM(context, -CGRectGetWidth(boxRect), 0);
+				break;
+			case 2:
+				CGContextTranslateCTM(context, -CGRectGetWidth(boxRect), 0);
+				CGContextTranslateCTM(context, 0, -CGRectGetHeight(boxRect));
+				break;
+			case 3:
+				CGContextTranslateCTM(context, 0, -CGRectGetHeight(boxRect));
+				break;
+			default:
+				break;
+		}
 		CGContextTranslateCTM(context, -boxRect.origin.x, -boxRect.origin.y);
 
 		CGContextDrawPDFPage(context, page);
