@@ -214,14 +214,28 @@
 		}
 	}
 
-	NSNumber *lastPageNumber = [[[pages allObjects] sortedArrayUsingSelector:@selector(compare:)] lastObject];
+	NSArray *sortedPages = [[pages allObjects] sortedArrayUsingSelector:@selector(compare:)];
+	NSNumber *lastPageNumber = [sortedPages lastObject];
 	if ([lastPageNumber intValue] > pageCount) {
 		ddfprintf(stderr, @"%@: Document has no page %@ (last page is %d)\n", DDCliApp, lastPageNumber, pageCount);
 		return EX_USAGE;
 	}
 
+	NSString *outputFormat = [NSString stringWithFormat:@"%%@-%%0%.0fd", floorf(log10f(pageCount)) + 1];
 	NSString *baseName = [[pdfPath lastPathComponent] stringByDeletingPathExtension];
-	bool success = [self rasterize:pdfDocument baseName:baseName];
+
+	bool success = true;
+	for (unsigned i = 0; i < [pages count]; i++)
+	{
+		size_t pageNumber = [[sortedPages objectAtIndex:i] intValue];
+
+		NSString *outputName = [NSString stringWithFormat:outputFormat, baseName, pageNumber];
+		NSString *outputPath = [[outputDir stringByAppendingPathComponent:outputName] stringByAppendingPathExtension:format];
+		NSURL *outputURL = [NSURL fileURLWithPath:outputPath];	
+
+		CGPDFPageRef page = CGPDFDocumentGetPage(pdfDocument, pageNumber);
+		success = success && [self rasterizePage:page toURL:outputURL];
+	}
 
 	return success ? EX_OK : EX_SOFTWARE;
 }
@@ -244,16 +258,10 @@ static int PDFPageGetRotation(CGPDFPageRef page)
 	}
 }
 
-- (BOOL) rasterize:(CGPDFDocumentRef)pdfDocument baseName:(NSString *)baseName
+- (BOOL) rasterizePage:(CGPDFPageRef)page toURL:(NSURL *)outputURL
 {
-	bool success = true;
-
-	size_t pageCount = CGPDFDocumentGetNumberOfPages(pdfDocument);
-	NSArray *sortedPages = [[pages allObjects] sortedArrayUsingSelector:@selector(compare:)];
-	for (unsigned i = 0; i < [pages count]; i++)
+	bool success;
 	{
-		size_t pageNumber = [[sortedPages objectAtIndex:i] intValue];
-		CGPDFPageRef page = CGPDFDocumentGetPage(pdfDocument, pageNumber);
 		CGRect boxRect = CGPDFPageGetBoxRect(page, kCGPDFCropBox);
 		int rotation = PDFPageGetRotation(page);
 		BOOL invertSize = (rotation % 2) == 1;
@@ -303,12 +311,7 @@ static int PDFPageGetRotation(CGPDFPageRef page)
 			// May happen when scale is very low, and width/height becomes 0.
 			exit(EX_SOFTWARE);
 		}
-
-		NSString *outputFormat = [NSString stringWithFormat:@"%%@-%%0%.0fd", floorf(log10f(pageCount)) + 1];
-		NSString *outputName = [NSString stringWithFormat:outputFormat, baseName, pageNumber];
-		NSString *outputPath = [[outputDir stringByAppendingPathComponent:outputName] stringByAppendingPathExtension:format];
-		NSURL *outputURL = [NSURL fileURLWithPath:outputPath];
-
+		
 		CGImageDestinationRef destination = CGImageDestinationCreateWithURL((CFURLRef)outputURL, (CFStringRef)[bitmapFormatUTIs objectForKey:format], 1, NULL);
 		if (!destination) {
 			// CGImageDestinationCreateWithURL is not documented it may return NULL,
@@ -316,14 +319,14 @@ static int PDFPageGetRotation(CGPDFPageRef page)
 			exit(EX_SOFTWARE);
 		}
 		CGImageDestinationAddImage(destination, pdfImage, NULL);
-		success = success && CGImageDestinationFinalize(destination);
+		success = CGImageDestinationFinalize(destination);
 
 		CFRelease(destination);
 		CGImageRelease(pdfImage);
 		CGContextRelease(context);
 		CGColorSpaceRelease(colorSpace);
 	}
-
+	
 	return success;
 }
 

@@ -20,6 +20,6 @@
 	NSMutableDictionary *bitmapFormatUTIs;
 }
 
-- (BOOL) rasterize:(CGPDFDocumentRef)pdfDocument baseName:(NSString *)baseName;
+- (BOOL) rasterizePage:(CGPDFPageRef)page toURL:(NSURL *)outputURL;
 
 @end
