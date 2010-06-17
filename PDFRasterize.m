@@ -221,8 +221,12 @@
 		return EX_USAGE;
 	}
 
-	NSString *outputFormat = [NSString stringWithFormat:@"%%@-%%0%.0fd", floorf(log10f(pageCount)) + 1];
 	NSString *baseName = [[pdfPath lastPathComponent] stringByDeletingPathExtension];
+	NSString *outputFormat;
+	if (pageCount == 1)
+		outputFormat = @"%@";
+	else
+		outputFormat = [NSString stringWithFormat:@"%%@-%%0%.0fd", floorf(log10f(pageCount)) + 1];
 
 	bool success = true;
 	for (unsigned i = 0; i < [pages count]; i++)
