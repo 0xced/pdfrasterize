@@ -28,8 +28,8 @@ CGSize PDFPageGetSize(CGPDFPageRef page, CGPDFBox box)
 	int rotation = PDFPageGetRotation(page);
 	bool invertSize = (rotation % 2) == 1;
 	
-	float width = invertSize ? CGRectGetHeight(boxRect) : CGRectGetWidth(boxRect);
-	float height = invertSize ? CGRectGetWidth(boxRect) : CGRectGetHeight(boxRect);
+	CGFloat width = invertSize ? CGRectGetHeight(boxRect) : CGRectGetWidth(boxRect);
+	CGFloat height = invertSize ? CGRectGetWidth(boxRect) : CGRectGetHeight(boxRect);
 	
 	return CGSizeMake(width, height);
 }

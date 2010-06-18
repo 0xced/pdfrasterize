@@ -187,6 +187,8 @@
 	exit(EX_OK);
 }
 
+static bool success = true;
+
 - (int) application:(DDCliApplication *)app runWithArguments:(NSArray *)arguments;
 {
 	if ([arguments count] != 1)
@@ -235,23 +237,50 @@
 	else
 		outputFormat = [NSString stringWithFormat:@"%%@-%%0%.0fd", floorf(log10f(pageCount)) + 1];
 	
-	bool success = true;
+	Class NSOperationQueueClass = NSClassFromString(@"NSOperationQueue");
+	id queue = [[NSOperationQueueClass alloc] init];
+	
 	for (unsigned i = 0; i < [pages count]; i++)
 	{
 		size_t pageNumber = [[sortedPages objectAtIndex:i] intValue];
 		
 		NSString *outputName = [NSString stringWithFormat:outputFormat, baseName, pageNumber];
 		NSString *outputPath = [[outputDir stringByAppendingPathComponent:outputName] stringByAppendingPathExtension:format];
-		NSURL *outputURL = [NSURL fileURLWithPath:outputPath];	
+		NSURL *outputURL = [NSURL fileURLWithPath:outputPath];
 		
 		CGPDFPageRef page = CGPDFDocumentGetPage(pdfDocument, pageNumber);
-		success = success && [self rasterizePage:page toURL:outputURL];
+		
+		if (queue)
+		{
+			NSArray *params = [NSArray arrayWithObjects:[NSValue valueWithPointer:page], outputURL, nil];
+			NSInvocationOperation *operation = [[NSInvocationOperation alloc] initWithTarget:self selector:@selector(rasterize:) object:params];
+			[operation addObserver:self forKeyPath:@"isFinished" options:0 context:NULL];
+			[queue addOperation:operation];
+			[operation release];
+		}
+		else
+			success = success && [self rasterizePage:page toURL:outputURL];
 	}
+	
+	[queue waitUntilAllOperationsAreFinished];
 	
 	return success ? EX_OK : EX_SOFTWARE;
 }
 
+- (void) observeValueForKeyPath:(NSString *)keyPath ofObject:(NSInvocationOperation *)operation change:(NSDictionary *)change context:(void *)context
+{
+	success = success && [[operation result] boolValue];
+}
+
 // MARK: Rasterization
+
+- (id) rasterize:(NSArray *)params;
+{
+	CGPDFPageRef page = [[params objectAtIndex:0] pointerValue];
+	NSURL *outputURL = [params objectAtIndex:1];
+	bool ok = [self rasterizePage:page toURL:outputURL];
+	return [NSNumber numberWithBool:ok];
+}
 
 - (BOOL) rasterizePage:(CGPDFPageRef)page toURL:(NSURL *)outputURL
 {

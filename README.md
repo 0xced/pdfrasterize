@@ -4,5 +4,4 @@ About
 
 Todo
 ====
- * Parallelize page rendering
  * Understand what is a color space and maybe use `CGColorSpaceCreateCalibratedRGB` or `CGColorSpaceCreateWithName` or whatever instead of `CGColorSpaceCreateDeviceRGB`
