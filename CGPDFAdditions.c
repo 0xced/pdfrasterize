@@ -22,6 +22,18 @@ int PDFPageGetRotation(CGPDFPageRef page)
 		return (4 + ((rotationAngle / 90) % 4)) % 4;
 }
 
+CGSize PDFPageGetSize(CGPDFPageRef page, CGPDFBox box)
+{
+	CGRect boxRect = CGPDFPageGetBoxRect(page, box);
+	int rotation = PDFPageGetRotation(page);
+	bool invertSize = (rotation % 2) == 1;
+	
+	float width = invertSize ? CGRectGetHeight(boxRect) : CGRectGetWidth(boxRect);
+	float height = invertSize ? CGRectGetWidth(boxRect) : CGRectGetHeight(boxRect);
+	
+	return CGSizeMake(width, height);
+}
+
 CGAffineTransform PDFPageGetDrawingTransform(CGPDFPageRef page, CGPDFBox box, float scale)
 {
 	CGRect boxRect = CGPDFPageGetBoxRect(page, box);

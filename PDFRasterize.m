@@ -255,12 +255,10 @@
 
 - (BOOL) rasterizePage:(CGPDFPageRef)page toURL:(NSURL *)outputURL
 {
-	CGRect boxRect = CGPDFPageGetBoxRect(page, kCGPDFCropBox);
-	int rotation = PDFPageGetRotation(page);
-	BOOL invertSize = (rotation % 2) == 1;
+	CGSize pageSize = PDFPageGetSize(page, kCGPDFCropBox);
 	
-	size_t width = scale * floorf(invertSize ? CGRectGetHeight(boxRect) : CGRectGetWidth(boxRect));
-	size_t height = scale * floorf(invertSize ? CGRectGetWidth(boxRect) : CGRectGetHeight(boxRect));
+	size_t width = scale * floorf(pageSize.width);
+	size_t height = scale * floorf(pageSize.height);
 	size_t bytesPerLine = width * 4;
 	uint64_t size = (uint64_t)height * (uint64_t)bytesPerLine;
 	void *bitmapData = malloc(size);
