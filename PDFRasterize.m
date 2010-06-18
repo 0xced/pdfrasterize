@@ -2,11 +2,12 @@
 //  PDFRasterize.m
 //  pdfrasterize
 //
-//  Created by Cédric Luthi on 14.12.09.
-//  Copyright 2009 Cédric Luthi. All rights reserved.
+//  Created by Cédric Luthi on 2009-12-14
+//  Copyright 2009-2010 Cédric Luthi. All rights reserved.
 //
 
 #import "PDFRasterize.h"
+#import "CGPDFAdditions.h"
 
 @implementation PDFRasterize
 
@@ -251,21 +252,6 @@
 }
 
 // MARK: Rasterization
-
-/* Return a normalized rotation between 0 and 3 */
-
-static int PDFPageGetRotation(CGPDFPageRef page)
-{
-	/* From the PDF Reference:
-	 * /Rotate: The number of degrees by which the page should be rotated clockwise when
-	 *          displayed or printed. The value must be a multiple of 90.
-	 */
-	int rotationAngle = CGPDFPageGetRotationAngle(page);
-	if (rotationAngle % 90 != 0)
-		return 0;
-	else
-		return (4 + ((rotationAngle / 90) % 4)) % 4;
-}
 
 - (BOOL) rasterizePage:(CGPDFPageRef)page toURL:(NSURL *)outputURL
 {

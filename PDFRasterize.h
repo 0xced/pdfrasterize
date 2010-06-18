@@ -1,10 +1,11 @@
-//
-//  PDFRasterize.h
-//  pdfrasterize
-//
-//  Created by Cédric Luthi on 14.12.09.
-//  Copyright 2009 Cédric Luthi. All rights reserved.
-//
+/*
+ *  PDFRasterize.h
+ *  pdfrasterize
+ *
+ *  Created by Cédric Luthi on 2009-12-14
+ *  Copyright 2009-2010 Cédric Luthi. All rights reserved.
+ *
+ */
 
 #import "DDCommandLineInterface.h"
 
