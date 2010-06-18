@@ -18,6 +18,7 @@
 	outputDir = @".";
 	format = @"png";
 	transparent = NO;
+	verbose = NO;
 	scale = 1.0;
 	pages = nil;
 	
@@ -58,6 +59,7 @@
 	    {@"output-dir",  'o',    DDGetoptRequiredArgument},
 	    {@"format",      'f',    DDGetoptRequiredArgument},
 	    {@"transparent", 't',    DDGetoptNoArgument},
+	    {@"verbose",     'v',    DDGetoptNoArgument},
 	    {@"scale",       's',    DDGetoptRequiredArgument},
 	    {@"pages",       'p',    DDGetoptRequiredArgument},
 	    {nil,             0,     0},
@@ -170,6 +172,7 @@
 	          @"    -t, --transparent             Draw a transparent background instead of white (some formats do not support transparency)\n"
 	          @"    -s, --scale FACTOR            Scale factor, must be positive -- Default is 1.0\n"
 	          @"    -p, --pages RANGE             Comma separated ranges of pages (e.g. 1,3-5,7) -- Default is all pages\n"
+	          @"    -v, --verbose                 Write a dot `.' on stdout each time a page is rasterized\n"
 	          @"    -h, --help                    Display this help and exit\n"
 	          @"    -V, --version                 Display version information and exit\n",
 	          [[self supportedFormats] componentsJoinedByString:@"/"]);
@@ -264,6 +267,9 @@ static bool success = true;
 	
 	[queue waitUntilAllOperationsAreFinished];
 	
+	if (verbose)
+		ddprintf(@"\n");
+	
 	return success ? EX_OK : EX_SOFTWARE;
 }
 
@@ -325,14 +331,20 @@ static bool success = true;
 		exit(EX_SOFTWARE); // CGImageDestinationCreateWithURL is not documented it may return NULL, but it does if the output url points to a non writable directory
 	
 	CGImageDestinationAddImage(destination, pdfImage, NULL);
-	bool success = CGImageDestinationFinalize(destination);
+	bool ok = CGImageDestinationFinalize(destination);
+	
+	if (verbose)
+	{
+		ddprintf(@".");
+		fflush(stdout);
+	}
 	
 	CFRelease(destination);
 	CGImageRelease(pdfImage);
 	CGContextRelease(context);
 	CGColorSpaceRelease(colorSpace);
 	
-	return success;
+	return ok;
 }
 
 @end

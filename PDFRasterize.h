@@ -15,6 +15,7 @@
 	NSString *outputDir;
 	NSString *format;
 	BOOL transparent;
+	BOOL verbose;
 	float scale;
 	NSMutableSet *pages;
 

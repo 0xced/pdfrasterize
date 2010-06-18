@@ -5,3 +5,4 @@ About
 Todo
 ====
  * Understand what is a color space and maybe use `CGColorSpaceCreateCalibratedRGB` or `CGColorSpaceCreateWithName` or whatever instead of `CGColorSpaceCreateDeviceRGB`
+ * Add a resolution option
