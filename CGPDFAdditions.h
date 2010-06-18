@@ -21,3 +21,5 @@
 */
 
 int PDFPageGetRotation(CGPDFPageRef page);
+
+CGAffineTransform PDFPageGetDrawingTransform(CGPDFPageRef page, CGPDFBox box, float scale);

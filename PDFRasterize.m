@@ -284,24 +284,8 @@
 	}
 	
 	// CGPDFPageGetDrawingTransform unfortunately does not upscale, see http://lists.apple.com/archives/quartz-dev/2005/Mar/msg00112.html
-	CGContextScaleCTM(context, scale, scale);
-	CGContextRotateCTM(context, -(rotation * M_PI_2));
-	switch (rotation)
-	{
-		case 1:
-			CGContextTranslateCTM(context, -CGRectGetWidth(boxRect), 0);
-			break;
-		case 2:
-			CGContextTranslateCTM(context, -CGRectGetWidth(boxRect), 0);
-			CGContextTranslateCTM(context, 0, -CGRectGetHeight(boxRect));
-			break;
-		case 3:
-			CGContextTranslateCTM(context, 0, -CGRectGetHeight(boxRect));
-			break;
-		default:
-			break;
-	}
-	CGContextTranslateCTM(context, -boxRect.origin.x, -boxRect.origin.y);
+	CGAffineTransform drawingTransform = PDFPageGetDrawingTransform(page, kCGPDFCropBox, scale);
+	CGContextConcatCTM(context, drawingTransform);
 	
 	CGContextDrawPDFPage(context, page);
 	

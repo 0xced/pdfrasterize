@@ -21,3 +21,33 @@ int PDFPageGetRotation(CGPDFPageRef page)
 	else
 		return (4 + ((rotationAngle / 90) % 4)) % 4;
 }
+
+CGAffineTransform PDFPageGetDrawingTransform(CGPDFPageRef page, CGPDFBox box, float scale)
+{
+	CGRect boxRect = CGPDFPageGetBoxRect(page, box);
+	int rotation = PDFPageGetRotation(page);
+	
+	CGAffineTransform transform = CGAffineTransformMakeScale(scale, scale);
+	
+	transform = CGAffineTransformRotate(transform, -(rotation * M_PI_2));
+	
+	switch (rotation)
+	{
+		case 1:
+			transform = CGAffineTransformTranslate(transform, -CGRectGetWidth(boxRect), 0);
+			break;
+		case 2:
+			transform = CGAffineTransformTranslate(transform, -CGRectGetWidth(boxRect), 0);
+			transform = CGAffineTransformTranslate(transform, 0, -CGRectGetHeight(boxRect));
+			break;
+		case 3:
+			transform = CGAffineTransformTranslate(transform, 0, -CGRectGetHeight(boxRect));
+			break;
+		default:
+			break;
+	}
+	
+	transform = CGAffineTransformTranslate(transform, -boxRect.origin.x, -boxRect.origin.y);
+	
+	return transform;
+}
