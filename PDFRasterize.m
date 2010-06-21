@@ -266,6 +266,9 @@ static bool success = true;
 	}
 	
 	[queue waitUntilAllOperationsAreFinished];
+	[queue release];
+	
+	CGPDFDocumentRelease(pdfDocument);
 	
 	if (verbose)
 		ddprintf(@"\n");
@@ -347,6 +350,7 @@ static bool success = true;
 	CGImageRelease(pdfImage);
 	CGContextRelease(context);
 	CGColorSpaceRelease(colorSpace);
+	free(bitmapData);
 	
 	return ok;
 }
