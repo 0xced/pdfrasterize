@@ -273,9 +273,13 @@ static bool success = true;
 	return success ? EX_OK : EX_SOFTWARE;
 }
 
-- (void) observeValueForKeyPath:(NSString *)keyPath ofObject:(NSInvocationOperation *)operation change:(NSDictionary *)change context:(void *)context
+- (void) observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context
 {
-	success = success && [[operation result] boolValue];
+	if ([keyPath isEqualToString:@"isFinished"])
+	{
+		NSInvocationOperation *operation = object;
+		success = success && [[operation result] boolValue];
+	}
 }
 
 // MARK: Rasterization
