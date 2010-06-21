@@ -71,7 +71,7 @@
 {
 	NSString *formatId = [theFormat lowercaseString];
 	NSArray *supportedFormats = [self supportedFormats];
-	if ([supportedFormats containsObject:formatId]) 
+	if ([supportedFormats containsObject:formatId])
 	{
 		[formatId retain];
 		[format release];

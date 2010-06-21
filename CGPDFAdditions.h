@@ -7,7 +7,7 @@
  *
  */
 
-#import <ApplicationServices/ApplicationServices.h>
+#import <QuartzCore/QuartzCore.h>
 
 /* Return a normalized rotation between 0 and 3
 
