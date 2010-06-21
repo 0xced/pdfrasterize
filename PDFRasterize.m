@@ -230,6 +230,7 @@ static bool success = true;
 	if ([lastPageNumber intValue] > pageCount)
 	{
 		ddfprintf(stderr, @"%@: Document has no page %@ (last page is %d)\n", DDCliApp, lastPageNumber, pageCount);
+		CGPDFDocumentRelease(pdfDocument);
 		return EX_USAGE;
 	}
 	
