@@ -63,3 +63,44 @@ CGAffineTransform PDFPageGetDrawingTransform(CGPDFPageRef page, CGPDFBox box, fl
 	
 	return transform;
 }
+
+CGImageRef CreatePDFPageImage(CGPDFPageRef page, CGFloat scale, bool transparentBackground)
+{
+	CGSize pageSize = PDFPageGetSize(page, kCGPDFCropBox);
+	
+	size_t width = scale * floorf(pageSize.width);
+	size_t height = scale * floorf(pageSize.height);
+	size_t bytesPerLine = width * 4;
+	uint64_t size = (uint64_t)height * (uint64_t)bytesPerLine;
+	void *bitmapData = malloc(size);
+	if (!bitmapData || (size > SIZE_MAX))
+		return NULL;
+	
+	CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
+	
+	CGContextRef context = CGBitmapContextCreate(bitmapData, width, height, 8, bytesPerLine, colorSpace, kCGImageAlphaPremultipliedFirst);
+	
+	if (transparentBackground)
+	{
+		CGContextClearRect(context, CGRectMake(0, 0, width, height));
+	}
+	else
+	{
+		CGContextSetRGBFillColor(context, 1, 1, 1, 1); // white
+		CGContextFillRect(context, CGRectMake(0, 0, width, height));
+	}
+	
+	// CGPDFPageGetDrawingTransform unfortunately does not upscale, see http://lists.apple.com/archives/quartz-dev/2005/Mar/msg00112.html
+	CGAffineTransform drawingTransform = PDFPageGetDrawingTransform(page, kCGPDFCropBox, scale);
+	CGContextConcatCTM(context, drawingTransform);
+	
+	CGContextDrawPDFPage(context, page);
+	
+	CGImageRef pdfImage = CGBitmapContextCreateImage(context);
+	
+	CGContextRelease(context);
+	CGColorSpaceRelease(colorSpace);
+	free(bitmapData);
+	
+	return pdfImage;
+}

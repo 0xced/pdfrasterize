@@ -298,39 +298,7 @@ static bool success = true;
 
 - (BOOL) rasterizePage:(CGPDFPageRef)page toURL:(NSURL *)outputURL
 {
-	CGSize pageSize = PDFPageGetSize(page, kCGPDFCropBox);
-	
-	size_t width = scale * floorf(pageSize.width);
-	size_t height = scale * floorf(pageSize.height);
-	size_t bytesPerLine = width * 4;
-	uint64_t size = (uint64_t)height * (uint64_t)bytesPerLine;
-	void *bitmapData = malloc(size);
-	if (!bitmapData || (size > SIZE_MAX))
-	{
-		ddfprintf(stderr, @"%@: Out of memory, try to reduce the scale factor\n", DDCliApp);
-		exit(EX_OSERR);
-	}
-	CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
-	
-	CGContextRef context = CGBitmapContextCreate(bitmapData, width, height, 8, bytesPerLine, colorSpace, kCGImageAlphaPremultipliedFirst);
-	
-	if (transparent)
-	{
-		CGContextClearRect(context, CGRectMake(0, 0, width, height));
-	}
-	else
-	{
-		CGContextSetRGBFillColor(context, 1, 1, 1, 1); // white
-		CGContextFillRect(context, CGRectMake(0, 0, width, height));
-	}
-	
-	// CGPDFPageGetDrawingTransform unfortunately does not upscale, see http://lists.apple.com/archives/quartz-dev/2005/Mar/msg00112.html
-	CGAffineTransform drawingTransform = PDFPageGetDrawingTransform(page, kCGPDFCropBox, scale);
-	CGContextConcatCTM(context, drawingTransform);
-	
-	CGContextDrawPDFPage(context, page);
-	
-	CGImageRef pdfImage = CGBitmapContextCreateImage(context);
+	CGImageRef pdfImage = CreatePDFPageImage(page, scale, transparent);
 	if (!pdfImage)
 		exit(EX_SOFTWARE); // May happen when scale is very low, and width/height becomes 0.
 	
@@ -349,9 +317,6 @@ static bool success = true;
 	
 	CFRelease(destination);
 	CGImageRelease(pdfImage);
-	CGContextRelease(context);
-	CGColorSpaceRelease(colorSpace);
-	free(bitmapData);
 	
 	return ok;
 }
