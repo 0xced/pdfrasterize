@@ -68,6 +68,7 @@
 		C6859EA3029092ED04C91782 /* pdfrasterize.1 */ = {isa = PBXFileReference; lastKnownFileType = text.man; path = pdfrasterize.1; sourceTree = "<group>"; };
 		DA0F88B611CB61DB00C56D91 /* CGPDFAdditions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CGPDFAdditions.h; sourceTree = "<group>"; };
 		DA0F88B711CB61DB00C56D91 /* CGPDFAdditions.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = CGPDFAdditions.c; sourceTree = "<group>"; };
+		DAAE7CF71213DB3D00153E8A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		DACA94C110D62C7B0084678C /* ddcli.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = ddcli.xcodeproj; path = "ddcli-1.0/ddcli.xcodeproj"; sourceTree = "<group>"; };
 		DACA94FB10D62D530084678C /* PDFRasterize.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PDFRasterize.m; sourceTree = "<group>"; };
 		DACA94FC10D62D530084678C /* PDFRasterize.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PDFRasterize.h; sourceTree = "<group>"; };
@@ -94,6 +95,7 @@
 				DACA94C110D62C7B0084678C /* ddcli.xcodeproj */,
 				08FB7795FE84155DC02AAC07 /* Source */,
 				C6859EA2029092E104C91782 /* Documentation */,
+				DAAE7CF71213DB3D00153E8A /* Info.plist */,
 				08FB779DFE84155DC02AAC07 /* External Frameworks and Libraries */,
 				1AB674ADFE9D54B511CA2CBB /* Products */,
 			);
@@ -252,6 +254,12 @@
 				GCC_PREFIX_HEADER = pdfrasterize_Prefix.pch;
 				HEADER_SEARCH_PATHS = "ddcli-1.0/lib";
 				INSTALL_PATH = /bin;
+				OTHER_LDFLAGS = (
+					"-sectcreate",
+					__TEXT,
+					__info_plist,
+					"$(INFOPLIST_FILE)",
+				);
 				PRODUCT_NAME = pdfrasterize;
 			};
 			name = Debug;
@@ -266,6 +274,12 @@
 				GCC_PREFIX_HEADER = pdfrasterize_Prefix.pch;
 				HEADER_SEARCH_PATHS = "ddcli-1.0/lib";
 				INSTALL_PATH = /bin;
+				OTHER_LDFLAGS = (
+					"-sectcreate",
+					__TEXT,
+					__info_plist,
+					"$(INFOPLIST_FILE)",
+				);
 				PRODUCT_NAME = pdfrasterize;
 			};
 			name = Release;
@@ -278,6 +292,7 @@
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				INFOPLIST_FILE = Info.plist;
 				MACOSX_DEPLOYMENT_TARGET = 10.4;
 				ONLY_ACTIVE_ARCH = YES;
 				PREBINDING = NO;
@@ -292,6 +307,7 @@
 				GCC_C_LANGUAGE_STANDARD = c99;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				INFOPLIST_FILE = Info.plist;
 				MACOSX_DEPLOYMENT_TARGET = 10.4;
 				PREBINDING = NO;
 				SDKROOT = macosx10.5;

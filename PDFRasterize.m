@@ -160,7 +160,9 @@
 
 - (void) printVersion:(FILE *)stream;
 {
-	ddfprintf(stream, @"%@ 1.0\n", DDCliApp);
+	NSString *name = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleName"];
+	NSString *version = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleVersion"];
+	ddfprintf(stream, @"%@ %@\n", name, version);
 }
 
 - (void) printHelp:(FILE *)stream;
