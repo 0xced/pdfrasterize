@@ -300,7 +300,10 @@ static bool success = true;
 {
 	CGImageRef pdfImage = CreatePDFPageImage(page, scale, transparent);
 	if (!pdfImage)
-		exit(EX_SOFTWARE); // May happen when scale is very low, and width/height becomes 0.
+	{
+		ddfprintf(stderr, @"%@: The scale parameter is too %s.\n", DDCliApp, scale < 1 ? "low" : "high");
+		exit(EX_USAGE);
+	}
 	
 	CGImageDestinationRef destination = CGImageDestinationCreateWithURL((CFURLRef)outputURL, (CFStringRef)[bitmapFormatUTIs objectForKey:format], 1, NULL);
 	if (!destination)

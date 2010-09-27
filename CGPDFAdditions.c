@@ -72,8 +72,12 @@ CGImageRef CreatePDFPageImage(CGPDFPageRef page, CGFloat scale, bool transparent
 	size_t height = scale * floorf(pageSize.height);
 	size_t bytesPerLine = width * 4;
 	uint64_t size = (uint64_t)height * (uint64_t)bytesPerLine;
+	
+	if ((size == 0) || (size > SIZE_MAX))
+		return NULL;
+	
 	void *bitmapData = malloc(size);
-	if (!bitmapData || (size > SIZE_MAX))
+	if (!bitmapData)
 		return NULL;
 	
 	CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
