@@ -80,7 +80,7 @@ CGImageRef CreatePDFPageImage(CGPDFPageRef page, CGFloat scale, bool transparent
 	if (!bitmapData)
 		return NULL;
 	
-	CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
+	CGColorSpaceRef colorSpace = CGColorSpaceCreateWithName(&kCGColorSpaceSRGB ? kCGColorSpaceSRGB : kCGColorSpaceGenericRGB);
 	
 	CGContextRef context = CGBitmapContextCreate(bitmapData, width, height, 8, bytesPerLine, colorSpace, kCGImageAlphaPremultipliedFirst);
 	
