@@ -5,16 +5,16 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>English</string>
 	<key>CFBundleExecutable</key>
-	<string>pdfrasterize</string>
+	<string>${EXECUTABLE_NAME}</string>
 	<key>CFBundleName</key>
-	<string>pdfrasterize</string>
+	<string>${PRODUCT_NAME}</string>
 	<key>CFBundleIdentifier</key>
-	<string>ch.pitaya.pdfrasterize</string>
+	<string>ch.pitaya.${PRODUCT_NAME:identifier}</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleVersion</key>
-	<string>1.0</string>
+	<string>${CURRENT_PROJECT_VERSION}</string>
 	<key>CFBundleShortVersionString</key>
-	<string>1.0</string>
+	<string>${CURRENT_PROJECT_VERSION}</string>
 </dict>
 </plist>
