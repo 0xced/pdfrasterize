@@ -80,8 +80,11 @@ CGImageRef CreatePDFPageImage(CGPDFPageRef page, CGFloat scale, bool transparent
 	if (!bitmapData)
 		return NULL;
 	
+#if TARGET_OS_IPHONE
+	CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
+#else
 	CGColorSpaceRef colorSpace = CGColorSpaceCreateWithName(&kCGColorSpaceSRGB ? kCGColorSpaceSRGB : kCGColorSpaceGenericRGB);
-	
+#endif
 	CGContextRef context = CGBitmapContextCreate(bitmapData, width, height, 8, bytesPerLine, colorSpace, kCGImageAlphaPremultipliedFirst);
 	
 	if (transparentBackground)
